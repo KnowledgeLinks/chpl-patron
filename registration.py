@@ -3,9 +3,10 @@ __author__ = "Jeremy Nelson"
 
 import csv
 import sqlite3
-from flask import Flask, request, jsonify 
+from flask import Flask, request, jsonify, abort
 
-app = Flask(__name__)
+app = Flask(__name__, instance_relative_config=True)
+app.config.from_pyfile("config.py")
 
 def add_contact(form, con, patron_id):
     """Creates rows in Email and Telephone Tables
@@ -105,6 +106,7 @@ VALUES (?,?);""",
     con.close()
     return card_request_id
 
+
 def generate_csv():
     con = sqlite3.connect("card-requests.sqlite")
     cur = con.cursor()
@@ -118,6 +120,33 @@ Email.patron = Patron.id AND
 Telephone.patron = Patron.id""")
     results = cur.fetchall()
 
+def register_patron(registration_id):
+    con = sqlite3.connect("card-requests.sqlite")
+    cur = con.cursor()
+    cur.execute("""SELECT DISTINCT Patron.first_name, Patron.last_name, Patron.birth_day,
+Location.address, Location.zip_code, Telephone.number, Email.address
+FROM LibraryCardRequest, Patron, Location, Email, Telephone
+WHERE LibraryCardRequest.id=? AND 
+LibraryCardRequest.patron = Patron.id AND
+LibraryCardRequest.location = Location.id AND
+Email.patron = Patron.id AND
+Telephone.patron = Patron.id""")
+    result = cur.fetchone()
+    cur.close()
+    con.close()
+    data = {
+        "nname": "{} {}".format(result[0], result[1]),
+        "F051birthdate": result[2],
+        "full_aaddress": "{}, {}".format(result[3], result[4]),
+        "zemailaddr": result[5],
+        "tphone1": result[6]}
+    add_patron_result = requests.post(app.config.get(SIERRA_URL),
+        data=data)
+    if add_patron_result.status_code < 399:
+        return True
+        
+    
+
 @app.route("/report")
 def report():
     return report
@@ -128,7 +157,9 @@ def index():
     if not request.method.startswith("POST"):
         return "Method not support"
     card_request_id = create_registration(request.form)
-    return jsonify({"Patron": card_request_id})
+    if register_patron(card_request_id) is True:
+        return jsonify({"Patron": card_request_id})
+    abort(505)
         
     
 
