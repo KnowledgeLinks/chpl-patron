@@ -1,0 +1,37 @@
+CREATE TABLE Patron (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    first_name VARCHAR NOT NULL,
+    last_name VARCHAR NOT NULL,
+    birth_day VARCHAR NOT NULL
+);
+
+CREATE TABLE Location (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    address VARCHAR NOT NULL,
+    zip_code VARCHAR NOT NULL
+);
+
+CREATE TABLE Email (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    address VARCHAR NOT NULL,
+    patron INTEGER,
+    FOREIGN KEY (patron) REFERENCES Patron (id)
+);
+
+CREATE TABLE Telephone (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    number VARCHAR NOT NULL,
+    patron INTEGER,
+    FOREIGN KEY (patron) REFERENCES Patron (id)
+);
+
+CREATE TABLE LibraryCardRequest (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    date DATETIME DEFAULT CURRENT_TIMESTAMP, 
+    date_retrieved DATETIME,
+    patron INTEGER,
+    location INTEGER,
+    FOREIGN KEY (patron) REFERENCES Patron (id),
+    FOREIGN KEY (location) REFERENCES Location (id)
+);
+
