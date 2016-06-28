@@ -1,3 +1,5 @@
 instance/
 *.swp
 *.sqlite
+__pycache__*
+nohup.*

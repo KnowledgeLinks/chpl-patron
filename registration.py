@@ -3,6 +3,7 @@ __author__ = "Jeremy Nelson"
 
 import csv
 import os
+import requests
 import sqlite3
 from flask import Flask, request, jsonify, abort
 
@@ -16,10 +17,6 @@ if DB_PATH is None:
         CURRENT_DIR,
         "card-requests.sqlite")
     
-    
-
-
-
 def add_contact(form, con, patron_id):
     """Creates rows in Email and Telephone Tables
 
@@ -103,7 +100,7 @@ VALUES(?,?,?)""",
    
 
 def create_registration(form):
-    con = sqlite3.connect()
+    con = sqlite3.connect(DB_PATH)
     patron_id = create_patron(form, con)
     location_id = add_location(form, con)
     add_contact(form, con, patron_id)
@@ -120,7 +117,7 @@ VALUES (?,?);""",
 
 
 def generate_csv():
-    con = sqlite3.connect("card-requests.sqlite")
+    con = sqlite3.connect(DB_PATH)
     cur = con.cursor()
     cur.execute("""SELECT DISTINCT LibraryCardRequest.date, Patron.first_name, 
 Patron.last_name, Patron.birth_day, Location.address, Location.zip_code, 
@@ -133,7 +130,7 @@ Telephone.patron = Patron.id""")
     results = cur.fetchall()
 
 def register_patron(registration_id):
-    con = sqlite3.connect("card-requests.sqlite")
+    con = sqlite3.connect(DB_PATH)
     cur = con.cursor()
     cur.execute("""SELECT DISTINCT Patron.first_name, Patron.last_name, Patron.birth_day,
 Location.address, Location.zip_code, Telephone.number, Email.address
@@ -142,7 +139,7 @@ WHERE LibraryCardRequest.id=? AND
 LibraryCardRequest.patron = Patron.id AND
 LibraryCardRequest.location = Location.id AND
 Email.patron = Patron.id AND
-Telephone.patron = Patron.id""")
+Telephone.patron = Patron.id""", (registration_id,))
     result = cur.fetchone()
     cur.close()
     con.close()
@@ -152,7 +149,7 @@ Telephone.patron = Patron.id""")
         "full_aaddress": "{}, {}".format(result[3], result[4]),
         "zemailaddr": result[5],
         "tphone1": result[6]}
-    add_patron_result = requests.post(app.config.get(SIERRA_URL),
+    add_patron_result = requests.post(app.config.get('SIERRA_URL'),
         data=data)
     if add_patron_result.status_code < 399:
         return True
@@ -161,13 +158,13 @@ Telephone.patron = Patron.id""")
 
 @app.route("/report")
 def report():
-    return report
+    return "IN REPORT"
 
 @app.route("/", methods=["POST"])
 def index():
     """Default view for handling post submissions from a posted form"""
     if not os.path.exists(DB_PATH):
-        con = sqlite.connnect(DB_PATH)
+        con = sqlite3.connect(DB_PATH)
         cur = con.cursor()
         with open(os.path.join(CURRENT_DIR, "db-schema.sql")) as script_fo:
             script = script_fo.read()
