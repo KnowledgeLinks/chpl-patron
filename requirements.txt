@@ -1,2 +1,3 @@
 Flask>=0.10.0
 requests>=2.9.1
+gunicorn>=19.5

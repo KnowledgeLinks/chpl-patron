@@ -4,6 +4,7 @@ __author__ = "Jeremy Nelson"
 import csv
 import os
 import requests
+import smtplib
 import sqlite3
 from flask import Flask, request, jsonify, abort
 
@@ -116,6 +117,28 @@ VALUES (?,?);""",
     return card_request_id
 
 
+def email_notification(db_result):
+    """Sends an email notification of new card request
+
+    Args:
+        db_result(list): List of data from the database query
+    """
+    body = """New Library Card Request
+Name: {} {}
+Birthday: {}
+Address: {}
+Zip Code: {}
+Phone number: {}
+Email: {}
+""".format(db_result)
+    msg = MIMEText(body)
+    msg['Subject'] = "New Card Request"
+    msg['From'] = app.CONFIG["EMAIL_SENDER"] 
+    msg['To'] = ','.join(app.CONFIG["EMAIL_RECIPIENTS"])
+    mail_server = smtplib.SMTP('localhost')
+    mail_server.send_message(msg)
+    mail_server.quit()
+
 def generate_csv():
     con = sqlite3.connect(DB_PATH)
     cur = con.cursor()
@@ -152,9 +175,9 @@ Telephone.patron = Patron.id""", (registration_id,))
     add_patron_result = requests.post(app.config.get('SIERRA_URL'),
         data=data)
     if add_patron_result.status_code < 399:
+        email_notification(result)
         return True
         
-    
 
 @app.route("/report")
 def report():
