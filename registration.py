@@ -6,6 +6,7 @@ import os
 import requests
 import smtplib
 import sqlite3
+from email.mime.text import MIMEText
 from flask import Flask, request, jsonify, abort
 
 app = Flask(__name__, instance_relative_config=True)
@@ -124,17 +125,17 @@ def email_notification(db_result):
         db_result(list): List of data from the database query
     """
     body = """New Library Card Request
-Name: {} {}
-Birthday: {}
-Address: {}
-Zip Code: {}
-Phone number: {}
-Email: {}
-""".format(db_result)
+Name: {0} {1}
+Birthday: {2}
+Address: {3}
+Zip Code: {4}
+Phone number: {5}
+Email: {6}
+""".format(*db_result)
     msg = MIMEText(body)
     msg['Subject'] = "New Card Request"
-    msg['From'] = app.CONFIG["EMAIL_SENDER"] 
-    msg['To'] = ','.join(app.CONFIG["EMAIL_RECIPIENTS"])
+    msg['From'] = app.config["EMAIL_SENDER"] 
+    msg['To'] = ','.join(app.config["EMAIL_RECIPIENTS"])
     mail_server = smtplib.SMTP('localhost')
     mail_server.send_message(msg)
     mail_server.quit()
@@ -205,4 +206,4 @@ def index():
 
 if __name__ == '__main__':
     print("Starting Chapel Hills Patron Registration")
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=4000, debug=True)
