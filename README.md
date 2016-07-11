@@ -18,7 +18,7 @@ the following variables set:
 
     EMAIL_RECIPIENTS = List of receipients for notification emails
 
-Install Python 3.5 dependencies using `pip3 install -r requirements`.
+Install Python 3.5 dependencies using `pip3 install -r requirements.txt`.
  
 ## Development
 Running in development by `python3 registration.py` using the built-in development

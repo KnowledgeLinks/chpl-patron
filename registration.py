@@ -136,6 +136,7 @@ Email: {6}
     msg['Subject'] = "New Card Request"
     msg['From'] = app.config["EMAIL_SENDER"] 
     msg['To'] = ','.join(app.config["EMAIL_RECIPIENTS"])
+    msg['To'] += ",{}".format(db_result[6])
     mail_server = smtplib.SMTP('localhost')
     mail_server.send_message(msg)
     mail_server.quit()
