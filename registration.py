@@ -192,9 +192,11 @@ Telephone.patron = Patron.id""", (registration_id,))
         data=data)
     if add_patron_result.status_code < 399:
         temp_card_number = find_card_number(add_patron_result.text)
+        print(add_patron_result.text)
+        print("Temporary card number is {}".format(temp_card_number))
         if temp_card_number is not None:
             cur.execute("""UPDATE LibraryCardRequest SET temp_number=? 
-WHERE id=?""", (temp_card_number, registration_id)
+WHERE id=?""", (temp_card_number, registration_id))
             con.commit()
             cur.close()
             con.close()
