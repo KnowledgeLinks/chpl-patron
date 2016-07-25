@@ -181,19 +181,18 @@ LibraryCardRequest.patron = Patron.id AND
 LibraryCardRequest.location = Location.id AND
 Email.patron = Patron.id AND
 Telephone.patron = Patron.id""", (registration_id,))
-    result = cur.fetchone()
+    result = list(cur.fetchone())
     data = {
         "nname": "{} {}".format(result[0], result[1]),
         "F051birthdate": result[2],
         "full_aaddress": "{}, {}".format(result[3], result[4]),
-        "zemailaddr": result[5],
-        "tphone1": result[6]}
+        "tphone1": result[5],
+        "zemailaddr": result[6]}
     add_patron_result = requests.post(app.config.get('SIERRA_URL'),
-        data=data)
+        data=data,
+        headers={"Cookie": 'SESSION_LANGUAGE=eng; SESSION_SCOPE=0; III_EXPT_FILE=aa31292'})
     if add_patron_result.status_code < 399:
         temp_card_number = find_card_number(add_patron_result.text)
-        print(add_patron_result.text)
-        print("Temporary card number is {}".format(temp_card_number))
         if temp_card_number is not None:
             cur.execute("""UPDATE LibraryCardRequest SET temp_number=? 
 WHERE id=?""", (temp_card_number, registration_id))
