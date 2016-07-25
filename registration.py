@@ -3,6 +3,7 @@ __author__ = "Jeremy Nelson"
 
 import csv
 import os
+import re
 import requests
 import smtplib
 import sqlite3
@@ -69,7 +70,6 @@ VALUES (?,?);""",
     return location_id
     
 
-
 def create_patron(form, con):
     """Creates a row in the Patron table
 
@@ -131,6 +131,7 @@ Address: {3}
 Zip Code: {4}
 Phone number: {5}
 Email: {6}
+Temporary Library Card Number: {7}
 """.format(*db_result)
     msg = MIMEText(body)
     msg['Subject'] = "New Card Request"
@@ -140,6 +141,21 @@ Email: {6}
     mail_server = smtplib.SMTP('localhost')
     mail_server.send_message(msg)
     mail_server.quit()
+
+TEMP_CARD_RE = re.compile(r"Your barcode is: <b>\n(\w+)</b>")
+def find_card_number(raw_html):
+    """Takes raw HTML from III and searches for temporary barcode number in the
+    result.
+
+    Args:
+        raw_html(str): Raw HTML from the result
+    Returns:
+        string: Temporary card number
+    """
+    result = TEMP_CARD_RE.search(raw_html)
+    if result is not None:
+        return result.groups()[0]
+
 
 def generate_csv():
     con = sqlite3.connect(DB_PATH)
@@ -166,8 +182,6 @@ LibraryCardRequest.location = Location.id AND
 Email.patron = Patron.id AND
 Telephone.patron = Patron.id""", (registration_id,))
     result = cur.fetchone()
-    cur.close()
-    con.close()
     data = {
         "nname": "{} {}".format(result[0], result[1]),
         "F051birthdate": result[2],
@@ -177,8 +191,19 @@ Telephone.patron = Patron.id""", (registration_id,))
     add_patron_result = requests.post(app.config.get('SIERRA_URL'),
         data=data)
     if add_patron_result.status_code < 399:
-        email_notification(result)
-        return True
+        temp_card_number = find_card_number(add_patron_result.text)
+        if temp_card_number is not None:
+            cur.execute("""UPDATE LibraryCardRequest SET temp_number=? 
+WHERE id=?""", (temp_card_number, registration_id)
+            con.commit()
+            cur.close()
+            con.close()
+            result.append(temp_card_number)
+            email_notification(result)
+            return True
+    cur.close()
+    con.close()
+    return False
         
 
 @app.route("/report")
@@ -200,6 +225,7 @@ def index():
         return "Method not support"
     card_request_id = create_registration(request.form)
     if register_patron(card_request_id) is True:
+        #! Should redirect to WP success page
         return jsonify({"Patron": card_request_id})
     abort(505)
         

@@ -29,6 +29,7 @@ CREATE TABLE LibraryCardRequest (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     date DATETIME DEFAULT CURRENT_TIMESTAMP, 
     date_retrieved DATETIME,
+    temp_number INTEGER,
     patron INTEGER,
     location INTEGER,
     FOREIGN KEY (patron) REFERENCES Patron (id),
