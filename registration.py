@@ -8,7 +8,7 @@ import requests
 import smtplib
 import sqlite3
 from email.mime.text import MIMEText
-from flask import Flask, request, jsonify, abort
+from flask import Flask, request, jsonify, abort, redirect
 
 app = Flask(__name__, instance_relative_config=True)
 app.config.from_pyfile("config.py")
@@ -201,11 +201,9 @@ WHERE id=?""", (temp_card_number, registration_id))
             con.close()
             result.append(temp_card_number)
             email_notification(result)
-            return True
+            return temp_card_number
     cur.close()
     con.close()
-    return False
-        
 
 @app.route("/report")
 def report():
@@ -225,10 +223,15 @@ def index():
     if not request.method.startswith("POST"):
         return "Method not support"
     card_request_id = create_registration(request.form)
-    if register_patron(card_request_id) is True:
-        #! Should redirect to WP success page
-        return jsonify({"Patron": card_request_id})
-    abort(505)
+    temp_card_number = register_patron(card_request_id)
+    if temp_card_number is not None:
+        return redirect("{}?number={}".format(
+            app.config.get("SUCCESS_URI"),
+            temp_card_number))
+    else:
+        return redirect("{}?error={}".format(
+            app.conf.get("ERROR_URI"),
+            "Failed to register Patron"))
         
     
 
