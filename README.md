@@ -18,6 +18,10 @@ the following variables set:
 
     EMAIL_RECIPIENTS = List of receipients for notification emails
 
+    SUCCESS_URI = Redirect URL to a Wordpress Page for a successful registration
+
+    ERROR_URI = Redirect URL to a Wordpress Page for a failed registration
+
 Install Python 3.5 dependencies using `pip3 install -r requirements.txt`.
  
 ## Development
