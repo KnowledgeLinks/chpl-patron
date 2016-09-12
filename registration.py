@@ -51,18 +51,20 @@ def add_location(form, con):
     """
     cur = con.cursor()
     address = form.get("g587-address")
+    city = form.get("g587-city")
+    state = form.get("g587-state")
     zip_code = form.get("g587-zipcode")
     cur = con.cursor()
     cur.execute("""SELECT id FROM Location
-WHERE address=? AND zip_code=?""",
-        (address, zip_code))
+WHERE address=? AND city=? AND state=? AND zip_code=?""",
+        (address, city, state, zip_code))
     result = cur.fetchone()
     if result:
         location_id = result[0]
     else:
-        cur.execute("""INSERT INTO Location (address, zip_code)
-VALUES (?,?);""",
-            (address, zip_code))
+        cur.execute("""INSERT INTO Location (address, city, state, zip_code)
+VALUES (?,?,?,?);""",
+            (address, city, state, zip_code))
         con.commit()
         cur.execute("SELECT max(id) FROM Location;")
         location_id = cur.fetchone()[0]
@@ -157,24 +159,11 @@ def find_card_number(raw_html):
         return result.groups()[0]
 
 
-def generate_csv():
-    con = sqlite3.connect(DB_PATH)
-    cur = con.cursor()
-    cur.execute("""SELECT DISTINCT LibraryCardRequest.date, Patron.first_name, 
-Patron.last_name, Patron.birth_day, Location.address, Location.zip_code, 
-Email.address, Telephone.number 
-FROM LibraryCardRequest, Patron, Location, Email, Telephone 
-WHERE LibraryCardRequest.patron = Patron.id AND 
-LibraryCardRequest.location = Location.id AND 
-Email.patron = Patron.id AND 
-Telephone.patron = Patron.id""")
-    results = cur.fetchall()
-
 def register_patron(registration_id):
     con = sqlite3.connect(DB_PATH)
     cur = con.cursor()
     cur.execute("""SELECT DISTINCT Patron.first_name, Patron.last_name, Patron.birth_day,
-Location.address, Location.zip_code, Telephone.number, Email.address
+Location.address, Location.city, Location.state, Location.zip_code, Telephone.number, Email.address
 FROM LibraryCardRequest, Patron, Location, Email, Telephone
 WHERE LibraryCardRequest.id=? AND 
 LibraryCardRequest.patron = Patron.id AND
@@ -183,11 +172,16 @@ Email.patron = Patron.id AND
 Telephone.patron = Patron.id""", (registration_id,))
     result = list(cur.fetchone())
     data = {
-        "nname": "{} {}".format(result[0], result[1]),
+        "nfirst": result[0], 
+        "nlast": result[1],
         "F051birthdate": result[2],
-        "full_aaddress": "{}, {}".format(result[3], result[4]),
-        "tphone1": result[5],
-        "zemailaddr": result[6]}
+        "stre_aaddress": result[3],
+        "city_aaddress": result[4],
+        "stat_aaddress": result[5],
+        "post_aaddress": result[6],
+        "tphone1": result[7],
+        "zemailaddr": result[8]}
+    print("Data is {}".format(data))
     add_patron_result = requests.post(app.config.get('SIERRA_URL'),
         data=data,
         headers={"Cookie": 'SESSION_LANGUAGE=eng; SESSION_SCOPE=0; III_EXPT_FILE=aa31292'})
