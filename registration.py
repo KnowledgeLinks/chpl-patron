@@ -181,7 +181,6 @@ Telephone.patron = Patron.id""", (registration_id,))
         "post_aaddress": result[6],
         "tphone1": result[7],
         "zemailaddr": result[8]}
-    print("Data is {}".format(data))
     add_patron_result = requests.post(app.config.get('SIERRA_URL'),
         data=data,
         headers={"Cookie": 'SESSION_LANGUAGE=eng; SESSION_SCOPE=0; III_EXPT_FILE=aa31292'})
