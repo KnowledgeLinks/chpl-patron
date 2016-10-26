@@ -218,6 +218,17 @@ WHERE Email.address=? """, (email_value.lower()))
         con.close()
     return return_val
 
+def verify_address(form):
+    """ calls the lob.com address verification api
+    https://lob.com/docs#verify_create
+    """
+    result = requests.post(url="https://api.lob.com/v1/verify"
+            data={"address_line1":form.get("g587-address"),
+                 "address_city":form.get("g587-city"),
+                 "address_state":form.get("g587-state"),
+                 "address_zip":form.get("g587-zipcode")},
+            headers={"user": test_0dc8d51e0acffcb1880e0f19c79b2f5b0cc})
+
 @app.route("/report")
 def report():
     return "IN REPORT"
@@ -229,11 +240,12 @@ def email_check():
         request args:
             email: the email address to check
     """
-    is_valid = validate_email(request.args.get("email"))
+    email_value = request.args.get("g587-email","").lower()
+    is_valid = validate_email(email_value)
     if not is_valid:
         valid = False
         message = "Enter a valid email address"
-    elif db_email_check(request.args.get("email")):
+    elif db_email_check(email_value):
         valid = False
         message = "Email has already been registered"
     else:
