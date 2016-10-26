@@ -9,6 +9,7 @@ import smtplib
 import sqlite3
 from email.mime.text import MIMEText
 from flask import Flask, request, jsonify, abort, redirect
+from validate_email import validate_email
 
 app = Flask(__name__, instance_relative_config=True)
 app.config.from_pyfile("config.py")
@@ -28,7 +29,7 @@ def add_contact(form, con, patron_id):
         con (sqlite3.connection): Database Connection
         patron_id(int): Integer 
     """
-    email = form.get("g587-email")
+    email = form.get("g587-email","").lower()
     telephone = form.get("g587-telephone")
     cur = con.cursor()
     cur.execute("INSERT INTO Email (address, patron) VALUES (?,?)",
@@ -180,7 +181,7 @@ Telephone.patron = Patron.id""", (registration_id,))
         "stat_aaddress": result[5],
         "post_aaddress": result[6],
         "tphone1": result[7],
-        "zemailaddr": result[8]}
+        "zemailaddr": result[8].lower()}
     add_patron_result = requests.post(app.config.get('SIERRA_URL'),
         data=data,
         headers={"Cookie": 'SESSION_LANGUAGE=eng; SESSION_SCOPE=0; III_EXPT_FILE=aa31292'})
@@ -198,9 +199,48 @@ WHERE id=?""", (temp_card_number, registration_id))
     cur.close()
     con.close()
 
+def db_email_check(email_value=None):
+    """Tests to see if the database already has the supplied email address
+
+    args:
+        email_value: the email address to search for
+    """
+    return_val = False
+    if email_value:
+        con = sqlite3.connect(DB_PATH)
+        cur = con.cursor()
+        cur.execute("""SELECT DISTINCT Email.address FROM Email
+WHERE Email.address=? """, (email_value.lower()))
+        result = list(cur.fetchone())
+        if result[0]:
+            return_val = True
+        cur.close()
+        con.close()
+    return return_val
+
 @app.route("/report")
 def report():
     return "IN REPORT"
+
+@app.route("/email_check")
+def email_check():
+    """ Checks to see if the email address as has already been registered 
+
+        request args:
+            email: the email address to check
+    """
+    is_valid = validate_email(request.args.get("email"))
+    if not is_valid:
+        valid = False
+        message = "Enter a valid email address"
+    elif db_email_check(request.args.get("email")):
+        valid = False
+        message = "Email has already been registered"
+    else:
+        valid = True
+        message = None
+    return jsonify({"valid":valid, "message":message})
+
 
 @app.route("/", methods=["POST"])
 def index():
