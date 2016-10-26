@@ -1,5 +1,5 @@
 """Chapel Hill Public Library Patron Self-Registration"""
-__author__ = "Jeremy Nelson"
+__author__ = "Jeremy Nelson, Mike Stabile"
 
 import csv
 import os
@@ -222,7 +222,7 @@ def verify_address(form):
     """ calls the lob.com address verification api
     https://lob.com/docs#verify_create
     """
-    result = requests.post(url="https://api.lob.com/v1/verify"
+    result = requests.post(url="https://api.lob.com/v1/verify",
             data={"address_line1":form.get("g587-address"),
                  "address_city":form.get("g587-city"),
                  "address_state":form.get("g587-state"),
