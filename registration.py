@@ -220,7 +220,7 @@ WHERE Email.address=? """, (email_value.lower()))
 
 def verify_address(form):
     """ calls the lob.com address verification api
-    https://lob.com/docs#verify_create
+    https://lob.com/docs#verixfy_create
     """
     result = requests.post(url="https://api.lob.com/v1/verify",
             data={"address_line1":form.get("g587-address"),
@@ -238,10 +238,12 @@ def email_check():
     """ Checks to see if the email address as has already been registered 
 
         request args:
-            email: the email address to check
+            g587-email: the email address to check
     """
     email_value = request.args.get("g587-email","").lower()
+    debug_on = reguest.args.get("debug",False)
     is_valid = validate_email(email_value)
+    debug_data = 
     if not is_valid:
         valid = False
         message = "Enter a valid email address"
@@ -251,7 +253,15 @@ def email_check():
     else:
         valid = True
         message = None
-    return jsonify({"valid":valid, "message":message})
+    rtn_msg = {"valid":valid, "message":message}
+    if debug_on:
+        email_check = db_email_check(email_value)
+        rtn_msg["debug"] = {
+                               "email":email_value,
+                               "validate_email": is_valid
+                               "db_email_check": email_check
+                           }
+    return jsonify(rtn_msg)
 
 
 @app.route("/", methods=["POST"])
