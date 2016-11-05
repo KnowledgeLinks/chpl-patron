@@ -111,7 +111,7 @@
             "g587-email": {
                 required: true,
                 email: true,
-                remote: "/email_check"
+                remote: "http://104.131.189.93:4000/email_check"
             },
             'g587-birthday': {
                 required: true,
