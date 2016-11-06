@@ -10,6 +10,7 @@ import sqlite3
 from email.mime.text import MIMEText
 from flask import Flask, request, jsonify, abort, redirect
 from validate_email import validate_email
+from passlib.hash import sha256_crypt
 
 app = Flask(__name__, instance_relative_config=True)
 app.config.from_pyfile("config.py")
@@ -21,13 +22,24 @@ if DB_PATH is None:
         CURRENT_DIR,
         "card-requests.sqlite")
 
-def setup_postalcodes(con):
-    """Setups up the database with postal codes if not already added to the
-    the database
+def setup_db():
+    """ checks to see if the database is setup and sets if up if it doesn't"""
 
-    Args:
-        con (sqlite3.connection): Database Connection
-    """
+    if not os.path.exists(DB_PATH):
+        con = sqlite3.connect(DB_PATH)
+        cur = con.cursor()
+        with open(os.path.join(CURRENT_DIR, "db-schema.sql")) as script_fo:
+            script = script_fo.read()
+            cur.executescript(script)
+        cur.close()
+        con.close()
+    setup_postalcodes()
+
+def setup_postalcodes():
+    """Setups up the database with postal codes if not already added to the
+    the database"""
+
+    con = sqlite3.connect(DB_PATH)
     postalcodes_setup = False
 
     # test to see if the table exists
@@ -36,44 +48,47 @@ FROM sqlite_master
 WHERE type='table' AND name='postalcodes';"""
 
     cur = con.cursor()
-    cur.execute(qry)
-    tbl_exists = False
-    for row in cur.fetchall():
-        exists = True
-        break
 
     # get the row count... if the row count is small reload the table
-    if tbl_exists:
+    if bool(len(cur.execute(qry).fetchall())):
         count = cur.execute("SELECT count(*) FROM postalcodes;").fetchone()
-        if count > 1000:
+        print("count ",count[0])
+        if count[0] > 1000:
             postalcodes_setup = True
 
     if not postalcodes_setup:
+        print("Setting Postal Codes")
         delete_tbl_sql = "DROP TABLE IF EXISTS postalcodes"
         create_tbl_sql = """CREATE TABLE IF NOT EXISTS postalcodes (
- zip_code text PRIMARY KEY,
- city text NOT NULL
+ id integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+ postal_code text NOT NULL,
+ city text NOT NULL,
  state_long text NOT NULL,
  state_short text,
- lat as text,
- long as text
-) WITHOUT ROWID;"""
-
+ lat text,
+ long text
+) ;"""
+        ins_qry = """INSERT INTO postalcodes 
+(postal_code, 
+ city,
+ state_long, 
+ state_short, 
+ lat, 
+ long) 
+ VALUES (?,?,?,?,?,?)"""
         cur.execute(delete_tbl_sql)
+        con.commit()
         cur.execute(create_tbl_sql)
+        con.commit()
+
         # read the datafile and add to the database
-        with open(os.path.join(CURRENT_DIR,"postalcodes","US.txt","r")) as data:
+        with open(os.path.join(CURRENT_DIR,"postalcodes","US.txt"), "r") as data:
             pcodes = list(csv.reader(data, delimiter='\t'))
             for ln in pcodes:
-                cur.execute("INSERT INTO postalcodes (%s %s %s %s %s %s) %s" % 
-                        ("zip_code", 
-                         "city",
-                         "state_long", 
-                         "state_short", 
-                         "lat", 
-                         "long",
-                         "VALUES (?,?,?,?,?,?)"),
-                        (ln[1], ln[2], ln[3], ln[4], ln[7], ln[8]))
+                cur.execute(ins_qry,(ln[1], ln[2], ln[3], ln[4], ln[9], ln[10]))
+        con.commit()
+        cur.close()
+        con.close()
 
 def add_contact(form, con, patron_id):
     """Creates rows in Email and Telephone Tables
@@ -295,9 +310,8 @@ def email_check():
             g587-email: the email address to check
     """
     email_value = request.args.get("g587-email","").lower()
-    debug_on = reguest.args.get("debug",False)
+    debug_on = request.args.get("debug",False)
     is_valid = validate_email(email_value)
-    debug_data = 
     if not is_valid:
         valid = False
         message = "Enter a valid email address"
@@ -312,23 +326,49 @@ def email_check():
         email_check = db_email_check(email_value)
         rtn_msg["debug"] = {
                                "email":email_value,
-                               "validate_email": is_valid
+                               "validate_email": is_valid,
                                "db_email_check": email_check
                            }
     return jsonify(rtn_msg)
 
+@app.route("/postal_code")
+def postal_code():
+    """ Checks to see if the email address as has already been registered 
+
+        request args:
+            g587-email: the email address to check
+    """
+    postal_value = request.args.get("g587-zipcode","").lower()
+    debug_on = request.args.get("debug",False)
+    valid = False
+    message = "Enter all 5 digits"
+    data = []
+    if len(postal_value) == 5:
+        con = sqlite3.connect(DB_PATH)
+        con.row_factory = sqlite3.Row
+        cur = con.cursor()
+        codes = cur.execute("SELECT * FROM postalcodes WHERE postal_code = ?",
+                            (postal_value,)).fetchall()
+        if len(codes) > 0:
+            valid = True
+            data = [dict(ix) for ix in codes]
+            message = ""
+        else:
+            message = "Enter a vaild US postal code"
+    rtn_msg = {"valid":valid, 
+               "message":message,
+               "data":data}
+    if debug_on:
+        email_check = db_email_check(email_value)
+        rtn_msg["debug"] = {
+                               "postal_code":postal_value
+                           }
+    return jsonify(rtn_msg)
 
 @app.route("/", methods=["POST"])
 def index():
     """Default view for handling post submissions from a posted form"""
-    if not os.path.exists(DB_PATH):
-        con = sqlite3.connect(DB_PATH)
-        cur = con.cursor()
-        with open(os.path.join(CURRENT_DIR, "db-schema.sql")) as script_fo:
-            script = script_fo.read()
-            cur.executescript(script)
-        cur.close()
-        con.close()  
+    setup_db() 
     if not request.method.startswith("POST"):
         return "Method not support"
     card_request_id = create_registration(request.form)
@@ -346,5 +386,5 @@ def index():
 
 if __name__ == '__main__':
     print("Starting Chapel Hills Patron Registration")
-    setup_postalcode
+    setup_db()
     app.run(host='0.0.0.0', port=4000, debug=True)
