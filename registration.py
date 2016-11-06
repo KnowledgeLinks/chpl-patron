@@ -20,7 +20,61 @@ if DB_PATH is None:
     DB_PATH = os.path.join(
         CURRENT_DIR,
         "card-requests.sqlite")
-    
+
+def setup_postalcodes(con):
+    """Setups up the database with postal codes if not already added to the
+    the database
+
+    Args:
+        con (sqlite3.connection): Database Connection
+    """
+    postalcodes_setup = False
+
+    # test to see if the table exists
+    qry = """SELECT name 
+FROM sqlite_master 
+WHERE type='table' AND name='postalcodes';"""
+
+    cur = con.cursor()
+    cur.execute(qry)
+    tbl_exists = False
+    for row in cur.fetchall():
+        exists = True
+        break
+
+    # get the row count... if the row count is small reload the table
+    if tbl_exists:
+        count = cur.execute("SELECT count(*) FROM postalcodes;").fetchone()
+        if count > 1000:
+            postalcodes_setup = True
+
+    if not postalcodes_setup:
+        delete_tbl_sql = "DROP TABLE IF EXISTS postalcodes"
+        create_tbl_sql = """CREATE TABLE IF NOT EXISTS postalcodes (
+ zip_code text PRIMARY KEY,
+ city text NOT NULL
+ state_long text NOT NULL,
+ state_short text,
+ lat as text,
+ long as text
+) WITHOUT ROWID;"""
+
+        cur.execute(delete_tbl_sql)
+        cur.execute(create_tbl_sql)
+        # read the datafile and add to the database
+        with open(os.path.join(CURRENT_DIR,"postalcodes","US.txt","r")) as data:
+            pcodes = list(csv.reader(data, delimiter='\t'))
+            for ln in pcodes:
+                cur.execute("INSERT INTO postalcodes (%s %s %s %s %s %s) %s" % 
+                        ("zip_code", 
+                         "city",
+                         "state_long", 
+                         "state_short", 
+                         "lat", 
+                         "long",
+                         "VALUES (?,?,?,?,?,?)"),
+                        (ln[1], ln[2], ln[3], ln[4], ln[7], ln[8]))
+
 def add_contact(form, con, patron_id):
     """Creates rows in Email and Telephone Tables
 
@@ -292,4 +346,5 @@ def index():
 
 if __name__ == '__main__':
     print("Starting Chapel Hills Patron Registration")
+    setup_postalcode
     app.run(host='0.0.0.0', port=4000, debug=True)
