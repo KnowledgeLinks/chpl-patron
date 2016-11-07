@@ -7,10 +7,12 @@ import re
 import requests
 import smtplib
 import sqlite3
+import dateutil
 from email.mime.text import MIMEText
 from flask import Flask, request, jsonify, abort, redirect
 from validate_email import validate_email
 from hashlib import sha512
+from dateutil.parser import parse as date_parse
 
 app = Flask(__name__, instance_relative_config=True)
 app.config.from_pyfile("config.py")
@@ -221,9 +223,16 @@ def validate_form(form):
         valid_postal['field'] = "g587-zipcode"
         errors.append(valid_postal)
     valid = True
+    try:
+        py_date = date_parse(form.get('g587-birthday'))
+        form['g587-birthday'] = py_date.strftime('%m/%d/%Y')
+    except:
+        errors.append({"field":"g587-birthday", 
+                       "valid":False,
+                       "message":"Invalid date format"})
     if len(errors) > 0:
         valid = False
-    return {"valid":valid, "errors":errors}
+    return {"valid":valid, "errors":errors, "form":form}
 
 @app.route("/report")
 def report():
@@ -317,19 +326,24 @@ def index():
     if not request.method.startswith("POST"):
         return "Method not supported"
     form = request.form.to_dict()
+    print(form)
     valid_form = validate_form(form)
+    print(valid_form['form'])
     if valid_form['valid']:
-        temp_card_number = register_patron(form)
+        temp_card_number = register_patron(valid_form['form'])
         if temp_card_number is not None:
-            return redirect("{}?number={}".format(
-                app.config.get("SUCCESS_URI"),
-                temp_card_number))
+            return jsonify({"valid": True,
+                            "url": "{}?number={}".format(
+                                  app.config.get("SUCCESS_URI"),
+                                  temp_card_number)})
         else:
-            return redirect("{}?error={}".format(
-                app.conf.get("ERROR_URI"),
-                "Failed to register Patron"))
+            return jsonify({"valid": True,
+                            "url": "{}?error={}".format(
+                                    app.conf.get("ERROR_URI"),
+                                    "Failed to register Patron")})
     else:
-        return redirect(request.referrer, code=304)
+        #return redirect(request.referrer, code=304)
+        return jsonify(valid_form)
         
 @app.route("/test_form", methods=['GET', 'POST'])
 def test_form():

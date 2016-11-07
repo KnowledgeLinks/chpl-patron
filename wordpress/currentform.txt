@@ -21,21 +21,17 @@
     </div>
  
     <div>
-        <label for='g587-telephone' class='grunion-field-label text'>Telephone</label>
-        <input type='text' name='g587-telephone' id='g587-telephone' value='' class='text' placeholder='555-555-5555'  />
-    </div>
- 
-    <div>
         <label for='g587-address' class='grunion-field-label text'>Address<span>(required)</span></label>
         <input type='text' name='g587-address' id='g587-address' value='' class='text'  required aria-required='true'/>
     </div>
     <div>
         <label for='g587-city' class='grunion-field-label text'>City<span>(required)</span></label>
-        <input type='text' name='g587-city' id='g587-city' value='' class='text'  required aria-required='true'/>
+        <input class='submitToggle' type='text' name='g587-city' id='g587-city' value='' class='text' required aria-required='true' disabled/>
     </div>
     <div>
         <label for='g587-state' class='grunion-field-label text'>State<span>(required)</span></label>
-        <select name='g587-state' id='g587-state'>
+        <select class='submitToggle' name='g587-state' id='g587-state' disabled>
+            <option disabled selected></option>
             <option value="AL">Alabama</option>
             <option value="AK">Alaska</option>
             <option value="AZ">Arizona</option>
@@ -44,6 +40,7 @@
             <option value="CO">Colorado</option>
             <option value="CT">Connecticut</option>
             <option value="DE">Delaware</option>
+            <option value="DC">District of Columbia</option>
             <option value="FL">Florida</option>
             <option value="GA">Georgia</option>
             <option value="HI">Hawaii</option>
@@ -68,7 +65,7 @@
             <option value="NJ">New Jersey</option>
             <option value="NM">New Mexico</option>
             <option value="NY">New York</option>
-            <option value="NC" selected="SELECTED">North Carolina</option>
+            <option value="NC">North Carolina</option>
             <option value="ND">North Dakota</option>
             <option value="OH">Ohio</option>
             <option value="OK">Oklahoma</option>
@@ -92,6 +89,10 @@
         <label for='g587-zipcode' class='grunion-field-label text'>Zip code<span>(required)</span></label>
         <input type='text' name='g587-zipcode' id='g587-zipcode' value='' class='text'  required aria-required='true'/>
     </div>
+    <div>
+        <label for='g587-telephone' class='grunion-field-label text'>Telephone</label>
+        <input type='text' name='g587-telephone' id='g587-telephone' value='' class='text' placeholder='555-555-5555'  />
+    </div>
     <p class='contact-submit'>
         <input type='submit' value='Submit &#187;' class='pushbutton-wide'/>
         <input type="hidden" id="_wpnonce" name="_wpnonce" value="98bf818db5" /><input type="hidden" name="_wp_http_referer" value="/get-a-library-card/" />
@@ -99,13 +100,53 @@
         <input type='hidden' name='action' value='grunion-contact-form' />
     </p>
 </form>
+<p class="data_reference">postal code data obtained from <a href='http://www.geonames.org' target="_blank">www.geonames.org</a></p>
 <script
     src="http://code.jquery.com/jquery-3.1.1.min.js"
     integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
-    crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.15.1/jquery.validate.min.js">
+    crossorigin="anonymous">
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.form/3.51/jquery.form.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.15.1/jquery.validate.min.js"></script>
 <script>
+    jQuery.validator.addMethod("postalCode", function(value, element) {
+        // call the postalcode lookup 
+        var valid = false
+        if (value.length == 5) {
+            jQuery.ajax({
+                url: 'http://104.131.189.93:4000/postal_code?g587-zipcode=' + value,
+                success: function (result) {
+                    valid = result.valid;
+                    if (valid) {
+                        if (result.data.length == 1) {
+                            $('#g587-city').replaceWith("<input class='submitToggle' type='text' name='g587-city' id='g587-city' value='' class='text' required aria-required='true' disabled/>")
+                            $('#g587-city').val(result.data[0].city);
+                            $('#g587-state').val(result.data[0].state_short);
+                        } else {
+                            var  options = [];
+                            for (i = 0; i < result.data.length; i++) {
+                                options.push("<option value='" + result.data[i].city + "'>" + result.data[i].city + "</option>");
+                            };
+                            $('#g587-city').replaceWith("<select name='g587-city' id='g587-city'>" + options.join() +"</select>");
+                            $('#g587-state').val(result.data[0].state_short);
+                        }
+                    } else {
+                        $('#g587-city').replaceWith("<input class='submitToggle' type='text' name='g587-city' id='g587-city' value='' class='text' required aria-required='true' disabled/>")
+                        $('#g587-city').val('');
+                        $('#g587-state').val('');
+                    }
+                },
+                async: false
+            });
+            return valid;
+        } else {
+            $('#g587-city').replaceWith("<input class='submitToggle' type='text' name='g587-city' id='g587-city' value='' class='text' required aria-required='true' disabled/>")
+            $('#g587-city').val('');
+            $('#g587-state').val('');
+            return false;
+        };
+    }, "Enter a valid US postal code");
+
     $('#library-card-registration').validate({
         rules: {
             "g587-email": {
@@ -116,8 +157,37 @@
             'g587-birthday': {
                 required: true,
                 date: true
+            },
+            'g587-zipcode': {
+                required: true,
+                postalCode: true
             }
+        },
+        submitHandler: function(form) {
+            $('form').find('.submitToggle').prop('disabled', false);
+            $(":disabled").removeAttr('disabled');
+            var validForm = $('form').valid();
+            if (validForm === true) {
+                $(":disabled").removeAttr('disabled');
+                $('form').ajaxSubmit({
+                    success:  function(result) {
+                        if (result.valid == true) {
+                            window.location.replace(result.url)
+                        } else {
+                            for (i=0; i<result.errors.length; i++) {
+                                var errText = '<label id="' + result.errors[i].field + '-error" class="error" for="' + result.errors[i].field + '">' + result.errors[i].message + '</label>';
+                                $("#"+result.errors[i].field).after(errText)
+                            }
+                        }
+                    }
+                });
+            } else {
+                $('form').find('.submitToggle').prop('disabled', true);
+            };
+            
+            
         }
-    })
+    });
+
 </script>
 
