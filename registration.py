@@ -10,7 +10,7 @@ import sqlite3
 from email.mime.text import MIMEText
 from flask import Flask, request, jsonify, abort, redirect
 from validate_email import validate_email
-from passlib.hash import sha256_crypt
+from hashlib import sha512
 
 app = Flask(__name__, instance_relative_config=True)
 app.config.from_pyfile("config.py")
@@ -33,7 +33,7 @@ def setup_db():
             cur.executescript(script)
         cur.close()
         con.close()
-    setup_postalcodes()
+        setup_postalcodes()
 
 def setup_postalcodes():
     """Setups up the database with postal codes if not already added to the
@@ -44,15 +44,14 @@ def setup_postalcodes():
 
     # test to see if the table exists
     qry = """SELECT name 
-FROM sqlite_master 
-WHERE type='table' AND name='postalcodes';"""
+             FROM sqlite_master 
+             WHERE type='table' AND name='postalcodes';"""
 
     cur = con.cursor()
 
     # get the row count... if the row count is small reload the table
     if bool(len(cur.execute(qry).fetchall())):
         count = cur.execute("SELECT count(*) FROM postalcodes;").fetchone()
-        print("count ",count[0])
         if count[0] > 1000:
             postalcodes_setup = True
 
@@ -60,22 +59,22 @@ WHERE type='table' AND name='postalcodes';"""
         print("Setting Postal Codes")
         delete_tbl_sql = "DROP TABLE IF EXISTS postalcodes"
         create_tbl_sql = """CREATE TABLE IF NOT EXISTS postalcodes (
- id integer PRIMARY KEY AUTOINCREMENT NOT NULL,
- postal_code text NOT NULL,
- city text NOT NULL,
- state_long text NOT NULL,
- state_short text,
- lat text,
- long text
-) ;"""
+                             id integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+                             postal_code text NOT NULL,
+                             city text NOT NULL,
+                             state_long text NOT NULL,
+                             state_short text,
+                             lat text,
+                             long text
+                            ) ;"""
         ins_qry = """INSERT INTO postalcodes 
-(postal_code, 
- city,
- state_long, 
- state_short, 
- lat, 
- long) 
- VALUES (?,?,?,?,?,?)"""
+                    (postal_code, 
+                     city,
+                     state_long, 
+                     state_short, 
+                     lat, 
+                     long) 
+                     VALUES (?,?,?,?,?,?)"""
         cur.execute(delete_tbl_sql)
         con.commit()
         cur.execute(create_tbl_sql)
@@ -90,107 +89,7 @@ WHERE type='table' AND name='postalcodes';"""
         cur.close()
         con.close()
 
-def add_contact(form, con, patron_id):
-    """Creates rows in Email and Telephone Tables
-
-    Args:
-        form (request.form): Flask request form
-        con (sqlite3.connection): Database Connection
-        patron_id(int): Integer 
-    """
-    email = form.get("g587-email","").lower()
-    telephone = form.get("g587-telephone")
-    cur = con.cursor()
-    cur.execute("INSERT INTO Email (address, patron) VALUES (?,?)",
-                (email, patron_id))
-    cur.execute("INSERT INTO Telephone (number, patron) VALUES (?,?)",
-                (telephone, patron_id))
-    con.commit()
-    cur.close()
-
-
-def add_location(form, con):
-    """Creates row in the Location table
-
-    Args:
-        form (request.form): Flask request form
-        con (sqlite3.connection): Database Connection
-
-    Returns:
-        int: Location code
-    """
-    cur = con.cursor()
-    address = form.get("g587-address")
-    city = form.get("g587-city")
-    state = form.get("g587-state")
-    zip_code = form.get("g587-zipcode")
-    cur = con.cursor()
-    cur.execute("""SELECT id FROM Location
-WHERE address=? AND city=? AND state=? AND zip_code=?""",
-        (address, city, state, zip_code))
-    result = cur.fetchone()
-    if result:
-        location_id = result[0]
-    else:
-        cur.execute("""INSERT INTO Location (address, city, state, zip_code)
-VALUES (?,?,?,?);""",
-            (address, city, state, zip_code))
-        con.commit()
-        cur.execute("SELECT max(id) FROM Location;")
-        location_id = cur.fetchone()[0]
-    cur.close()
-    return location_id
-    
-
-def create_patron(form, con):
-    """Creates a row in the Patron table
-
-    Args:
-        form (request.form): Flask request form
-        con (sqlite3.connection): Database Connection
-
-    Returns:
-        int: Existing or New Patron id
-    """
-    cur = con.cursor()
-    first_name = form.get("g587-firstname")
-    last_name = form.get("g587-lastname")
-    birth_day = form.get("g587-birthday")
-    cur.execute("""SELECT id FROM Patron 
-WHERE first_name=? AND last_name=? AND birth_day=?;""",
-        (first_name, last_name, birth_day))
-    result = cur.fetchone()
-    if result is not None:
-        patron_id = result[0]
-    else:
-        cur.execute("""INSERT INTO Patron (first_name, last_name, birth_day)
-VALUES(?,?,?)""",
-        (first_name, last_name, birth_day))
-        con.commit()
-        cur.execute("""SELECT max(id) FROM Patron""")
-        patron_id = cur.fetchone()[0]
-    cur.close()
-    return patron_id
-   
-
-def create_registration(form):
-    con = sqlite3.connect(DB_PATH)
-    patron_id = create_patron(form, con)
-    location_id = add_location(form, con)
-    add_contact(form, con, patron_id)
-    cur = con.cursor()
-    cur.execute("""INSERT INTO LibraryCardRequest (patron, location)
-VALUES (?,?);""",
-        (patron_id, location_id))
-    con.commit()
-    card_request_id = cur.execute(
-        "SELECT max(id) FROM LibraryCardRequest;").fetchone()[0]
-    cur.close()
-    con.close()
-    return card_request_id
-
-
-def email_notification(db_result):
+def email_notification(form):
     """Sends an email notification of new card request
 
     Args:
@@ -199,12 +98,21 @@ def email_notification(db_result):
     body = """New Library Card Request
 Name: {0} {1}
 Birthday: {2}
-Address: {3}
-Zip Code: {4}
-Phone number: {5}
-Email: {6}
-Temporary Library Card Number: {7}
-""".format(*db_result)
+Address: {3}, {4}, {5} {6}
+Phone number: {7}
+Email: {8}
+Temporary Library Card Number: {9}
+""".format(form.get("g587-firstname"),
+           form.get("g587-lastname"),
+           form.get("g587-birthday"),
+           form.get("g587-address"),
+           form.get("g587-city"),
+           form.get("g587-state"),
+           form.get("g587-zipcode"),
+           form.get("g587-telephone"),
+           form.get("g587-email","").lower(),
+           form.get("temp_card_number")
+          )
     msg = MIMEText(body)
     msg['Subject'] = "New Card Request"
     msg['From'] = app.config["EMAIL_SENDER"] 
@@ -228,45 +136,50 @@ def find_card_number(raw_html):
     if result is not None:
         return result.groups()[0]
 
+def register_patron(form):
+    """send the patron data to iii and adds a hash of the registered email
+    to the local sqlite db
 
-def register_patron(registration_id):
-    con = sqlite3.connect(DB_PATH)
-    cur = con.cursor()
-    cur.execute("""SELECT DISTINCT Patron.first_name, Patron.last_name, Patron.birth_day,
-Location.address, Location.city, Location.state, Location.zip_code, Telephone.number, Email.address
-FROM LibraryCardRequest, Patron, Location, Email, Telephone
-WHERE LibraryCardRequest.id=? AND 
-LibraryCardRequest.patron = Patron.id AND
-LibraryCardRequest.location = Location.id AND
-Email.patron = Patron.id AND
-Telephone.patron = Patron.id""", (registration_id,))
-    result = list(cur.fetchone())
-    data = {
-        "nfirst": result[0], 
-        "nlast": result[1],
-        "F051birthdate": result[2],
-        "stre_aaddress": result[3],
-        "city_aaddress": result[4],
-        "stat_aaddress": result[5],
-        "post_aaddress": result[6],
-        "tphone1": result[7],
-        "zemailaddr": result[8].lower()}
-    add_patron_result = requests.post(app.config.get('SIERRA_URL'),
-        data=data,
-        headers={"Cookie": 'SESSION_LANGUAGE=eng; SESSION_SCOPE=0; III_EXPT_FILE=aa31292'})
-    if add_patron_result.status_code < 399:
-        temp_card_number = find_card_number(add_patron_result.text)
+    Args:
+        form
+    """
+    data =  {
+                "nfirst": form.get("g587-firstname"), 
+                "nlast": form.get("g587-lastname"),
+                "F051birthdate": form.get("g587-birthday"),
+                "stre_aaddress": form.get("g587-address"),
+                "city_aaddress": form.get("g587-city"),
+                "stat_aaddress": form.get("g587-state"),
+                "post_aaddress": form.get("g587-zipcode"),
+                "tphone1": form.get("g587-telephone"),
+                "zemailaddr": form.get("g587-email","").lower()
+            }
+
+    email_hash = sha512(form.get("g587-email","").lower().encode()).hexdigest()   
+    headers={"Cookie": 'SESSION_LANGUAGE=eng; SESSION_SCOPE=0; III_EXPT_FILE=aa31292'}
+    # add_patron_result = requests.post(app.config.get('SIERRA_URL'),
+    #                                   data=data,
+    #                                   headers=headers)
+    # if add_patron_result.status_code < 399:
+    if True:
+        #temp_card_number = find_card_number(add_patron_result.text)
+        temp_card_number = 123456
         if temp_card_number is not None:
-            cur.execute("""UPDATE LibraryCardRequest SET temp_number=? 
-WHERE id=?""", (temp_card_number, registration_id))
+            con = sqlite3.connect(DB_PATH)
+            cur = con.cursor()
+            form['temp_card_number'] = temp_card_number
+            cur.execute("""INSERT INTO LibraryCardRequest 
+                           (email, temp_number) 
+                           VALUES (?,?);""", (email_hash, temp_card_number,))
             con.commit()
             cur.close()
             con.close()
-            result.append(temp_card_number)
-            email_notification(result)
+            #email_notification(form)
             return temp_card_number
-    cur.close()
-    con.close()
+        else:
+            return None
+    else:
+        None
 
 def db_email_check(email_value=None):
     """Tests to see if the database already has the supplied email address
@@ -276,41 +189,61 @@ def db_email_check(email_value=None):
     """
     return_val = False
     if email_value:
+        email_hash = sha512(email_value.lower().encode()).hexdigest()
         con = sqlite3.connect(DB_PATH)
         cur = con.cursor()
-        cur.execute("""SELECT DISTINCT Email.address FROM Email
-WHERE Email.address=? """, (email_value.lower()))
-        result = list(cur.fetchone())
-        if result[0]:
+        found = bool(cur.execute("""SELECT count(*) FROM LibraryCardRequest
+                WHERE email=?""", (email_hash,)).fetchone()[0])
+        if found:
             return_val = True
         cur.close()
         con.close()
     return return_val
 
-def verify_address(form):
-    """ calls the lob.com address verification api
-    https://lob.com/docs#verixfy_create
+def validate_form(form):
+    """validates the form data before saving
+
+    Args:
+        form: post form data
+
+    Returns:
+        dict: {valid: bool, errors: []}
     """
-    result = requests.post(url="https://api.lob.com/v1/verify",
-            data={"address_line1":form.get("g587-address"),
-                 "address_city":form.get("g587-city"),
-                 "address_state":form.get("g587-state"),
-                 "address_zip":form.get("g587-zipcode")},
-            headers={"user": test_0dc8d51e0acffcb1880e0f19c79b2f5b0cc})
+    errors = []
+    valid_email = email_check(email=form.get('g587-email'),debug=False)
+    if isinstance(valid_email, bool) and not valid_email:
+        valid_email['field'] = "g587-email"
+        errors.append(valid_email)
+    valid = True
+    valid_postal = postal_code(zipcode=form.get('g587-zipcode'),
+                               debug=False)
+    if not valid_postal['valid']:
+        valid_postal['field'] = "g587-zipcode"
+        errors.append(valid_postal)
+    valid = True
+    if len(errors) > 0:
+        valid = False
+    return {"valid":valid, "errors":errors}
 
 @app.route("/report")
 def report():
     return "IN REPORT"
 
 @app.route("/email_check")
-def email_check():
+def email_check(**kwargs):
     """ Checks to see if the email address as has already been registered 
 
         request args:
             g587-email: the email address to check
     """
-    email_value = request.args.get("g587-email","").lower()
-    debug_on = request.args.get("debug",False)
+    # test to see if the function is being called by a request
+    return_dict = False
+    if kwargs.get("email"):
+        return_dict = True
+
+    email_value = kwargs.get("email",
+                             request.args.get("g587-email","")).lower()
+    debug_on = kwargs.get("debug",request.args.get("debug",False))
     is_valid = validate_email(email_value)
     if not is_valid:
         valid = False
@@ -320,8 +253,9 @@ def email_check():
         message = "Email has already been registered"
     else:
         valid = True
-        message = None
+        message = True
     rtn_msg = {"valid":valid, "message":message}
+    rtn_msg = message
     if debug_on:
         email_check = db_email_check(email_value)
         rtn_msg["debug"] = {
@@ -329,17 +263,25 @@ def email_check():
                                "validate_email": is_valid,
                                "db_email_check": email_check
                            }
-    return jsonify(rtn_msg)
+    if return_dict:
+        return rtn_msg
+    else:
+        return jsonify(rtn_msg)
 
 @app.route("/postal_code")
-def postal_code():
+def postal_code(**kwargs):
     """ Checks to see if the email address as has already been registered 
 
         request args:
             g587-email: the email address to check
     """
-    postal_value = request.args.get("g587-zipcode","").lower()
-    debug_on = request.args.get("debug",False)
+    return_dict = False
+    if kwargs.get("zipcode"):
+        return_dict = True
+
+    postal_value = kwargs.get("zipcode",
+                              request.args.get("g587-zipcode",""))
+    debug_on = kwargs.get("debug",request.args.get("debug",False))
     valid = False
     message = "Enter all 5 digits"
     data = []
@@ -354,7 +296,7 @@ def postal_code():
             data = [dict(ix) for ix in codes]
             message = ""
         else:
-            message = "Enter a vaild US postal code"
+            message = "Enter a valid US postal code"
     rtn_msg = {"valid":valid, 
                "message":message,
                "data":data}
@@ -363,26 +305,39 @@ def postal_code():
         rtn_msg["debug"] = {
                                "postal_code":postal_value
                            }
-    return jsonify(rtn_msg)
+    if return_dict:
+        return rtn_msg
+    else:
+        return jsonify(rtn_msg)
 
 @app.route("/", methods=["POST"])
 def index():
     """Default view for handling post submissions from a posted form"""
     setup_db() 
     if not request.method.startswith("POST"):
-        return "Method not support"
-    card_request_id = create_registration(request.form)
-    temp_card_number = register_patron(card_request_id)
-    if temp_card_number is not None:
-        return redirect("{}?number={}".format(
-            app.config.get("SUCCESS_URI"),
-            temp_card_number))
+        return "Method not supported"
+    form = request.form.to_dict()
+    valid_form = validate_form(form)
+    if valid_form['valid']:
+        temp_card_number = register_patron(form)
+        if temp_card_number is not None:
+            return redirect("{}?number={}".format(
+                app.config.get("SUCCESS_URI"),
+                temp_card_number))
+        else:
+            return redirect("{}?error={}".format(
+                app.conf.get("ERROR_URI"),
+                "Failed to register Patron"))
     else:
-        return redirect("{}?error={}".format(
-            app.conf.get("ERROR_URI"),
-            "Failed to register Patron"))
+        return redirect(request.referrer, code=304)
         
-    
+@app.route("/test_form", methods=['GET', 'POST'])
+def test_form():
+    form_path = os.path.join(CURRENT_DIR,"wordpress","currentform.txt")
+    html = ""
+    with open(form_path, "r") as form_file:
+        html = form_file.read()
+    return html.replace("104.131.189.93", "localhost")
 
 if __name__ == '__main__':
     print("Starting Chapel Hills Patron Registration")

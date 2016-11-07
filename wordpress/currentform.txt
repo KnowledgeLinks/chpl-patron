@@ -1,4 +1,4 @@
-<form action='http://104.131.189.93:4000' method='post' class='contact-form commentsblock' id="library-card-registration">
+<form action='http://104.131.189.93:4000/' method='post' class='contact-form commentsblock' id="library-card-registration">
  
     <div>
         <label for='g587-firstname' class='grunion-field-label name'>First name<span>(required)</span></label>
