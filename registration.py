@@ -169,9 +169,12 @@ def register_patron(form):
             con = sqlite3.connect(DB_PATH)
             cur = con.cursor()
             form['temp_card_number'] = temp_card_number
-            cur.execute("""INSERT INTO LibraryCardRequest 
+            try:
+                cur.execute("""INSERT INTO LibraryCardRequest 
                            (email, temp_number) 
-                           VALUES (?,?);""", (email_hash, temp_card_number,))
+                    VALUES (?,?);""", (email_hash, temp_card_number,))
+            except sqllite3.IntegrityError:
+                pass
             con.commit()
             cur.close()
             con.close()
