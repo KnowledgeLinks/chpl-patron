@@ -217,6 +217,7 @@ def validate_form(form):
         errors.append(valid_email)
     valid = True
     valid_postal = postal_code(zipcode=form.get('g587-zipcode'),
+                               
                                debug=False)
     if not valid_postal['valid']:
         valid_postal['field'] = "g587-zipcode"
@@ -313,6 +314,7 @@ def postal_code(**kwargs):
         rtn_msg["debug"] = {
                                "postal_code":postal_value
                            }
+    print("Return dict is {}".format(return_dict))
     if return_dict:
         return rtn_msg
     else:
@@ -325,9 +327,7 @@ def index():
     if not request.method.startswith("POST"):
         return "Method not supported"
     form = request.form.to_dict()
-    print(form)
     valid_form = validate_form(form)
-    print(valid_form['form'])
     if valid_form['valid']:
         temp_card_number = register_patron(valid_form['form'])
         if temp_card_number is not None:
