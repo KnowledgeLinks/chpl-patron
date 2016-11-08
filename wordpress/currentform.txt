@@ -172,7 +172,7 @@
                 $('form').ajaxSubmit({
                     success:  function(result) {
                         if (result.valid == true) {
-                            window.location.replace(result.url)
+                            window.location.href = result.url;
                         } else {
                             for (i=0; i<result.errors.length; i++) {
                                 var errText = '<label id="' + result.errors[i].field + '-error" class="error" for="' + result.errors[i].field + '">' + result.errors[i].message + '</label>';

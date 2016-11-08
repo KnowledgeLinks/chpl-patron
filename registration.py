@@ -212,12 +212,16 @@ def validate_form(form):
     """
     errors = []
     valid_email = email_check(email=form.get('g587-email'),debug=False)
-    if isinstance(valid_email, bool) and not valid_email:
-        valid_email['field'] = "g587-email"
-        errors.append(valid_email)
+    # print("str: ", isinstance(valid_email, str))
+    # print("bool: ", isinstance(valid_email, bool))
+    # print("not: ", not valid_email)
+    # print("sum:", isinstance(valid_email, str) or (isinstance(valid_email, bool) and not valid_email))
+    if isinstance(valid_email, str) or (isinstance(valid_email, bool) and not valid_email):
+        errors.append({"field": "g587-email",
+                       "valid": False,
+                       "message": valid_email})
     valid = True
     valid_postal = postal_code(zipcode=form.get('g587-zipcode'),
-                               
                                debug=False)
     if not valid_postal['valid']:
         valid_postal['field'] = "g587-zipcode"
