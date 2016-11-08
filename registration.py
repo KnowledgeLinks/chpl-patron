@@ -97,6 +97,7 @@ def email_notification(form):
     Args:
         db_result(list): List of data from the database query
     """
+    email = form.get("g587-email","").lower()
     body = """New Library Card Request
 Name: {0} {1}
 Birthday: {2}
@@ -112,14 +113,14 @@ Temporary Library Card Number: {9}
            form.get("g587-state"),
            form.get("g587-zipcode"),
            form.get("g587-telephone"),
-           form.get("g587-email","").lower(),
+           email,
            form.get("temp_card_number")
           )
     msg = MIMEText(body)
     msg['Subject'] = "New Card Request"
     msg['From'] = app.config["EMAIL_SENDER"] 
     msg['To'] = ','.join(app.config["EMAIL_RECIPIENTS"])
-    msg['To'] += ",{}".format(db_result[6])
+    msg['To'] += ",{}".format(email)
     mail_server = smtplib.SMTP('localhost')
     mail_server.send_message(msg)
     mail_server.quit()
