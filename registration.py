@@ -159,13 +159,11 @@ def register_patron(form):
 
     email_hash = sha512(form.get("g587-email","").lower().encode()).hexdigest()   
     headers={"Cookie": 'SESSION_LANGUAGE=eng; SESSION_SCOPE=0; III_EXPT_FILE=aa31292'}
-    # add_patron_result = requests.post(app.config.get('SIERRA_URL'),
-    #                                   data=data,
-    #                                   headers=headers)
-    # if add_patron_result.status_code < 399:
-    if True:
-        #temp_card_number = find_card_number(add_patron_result.text)
-        temp_card_number = 123456
+    add_patron_result = requests.post(app.config.get('SIERRA_URL'),
+                                       data=data,
+                                       headers=headers)
+    if add_patron_result.status_code < 399:
+        temp_card_number = find_card_number(add_patron_result.text)
         if temp_card_number is not None:
             con = sqlite3.connect(DB_PATH)
             cur = con.cursor()
@@ -176,7 +174,7 @@ def register_patron(form):
             con.commit()
             cur.close()
             con.close()
-            #email_notification(form)
+            email_notification(form)
             return temp_card_number
         else:
             return None
