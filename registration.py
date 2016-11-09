@@ -9,10 +9,12 @@ import smtplib
 import sqlite3
 import dateutil
 from email.mime.text import MIMEText
-from flask import Flask, request, jsonify, abort, redirect
+from flask import Flask, make_response, request, current_app, jsonify, abort, redirect
 from validate_email import validate_email
 from hashlib import sha512
 from dateutil.parser import parse as date_parse
+from datetime import timedelta
+from functools import update_wrapper
 
 app = Flask(__name__, instance_relative_config=True)
 app.config.from_pyfile("config.py")
@@ -23,6 +25,49 @@ if DB_PATH is None:
     DB_PATH = os.path.join(
         CURRENT_DIR,
         "card-requests.sqlite")
+CROSS_DOMAIN_SITE = "http://chapelhillpubliclibrary.org"
+basestring = (str,bytes)
+
+def crossdomain(origin=None, methods=None, headers=None,
+                max_age=21600, attach_to_all=True,
+                automatic_options=True):
+    if methods is not None:
+        methods = ', '.join(sorted(x.upper() for x in methods))
+    if headers is not None and not isinstance(headers, basestring):
+        headers = ', '.join(x.upper() for x in headers)
+    if not isinstance(origin, basestring):
+        origin = ', '.join(origin)
+    if isinstance(max_age, timedelta):
+        max_age = max_age.total_seconds()
+
+    def get_methods():
+        if methods is not None:
+            return methods
+
+        options_resp = current_app.make_default_options_response()
+        return options_resp.headers['allow']
+
+    def decorator(f):
+        def wrapped_function(*args, **kwargs):
+            if automatic_options and request.method == 'OPTIONS':
+                resp = current_app.make_default_options_response()
+            else:
+                resp = make_response(f(*args, **kwargs))
+            if not attach_to_all and request.method != 'OPTIONS':
+                return resp
+
+            h = resp.headers
+
+            h['Access-Control-Allow-Origin'] = origin
+            h['Access-Control-Allow-Methods'] = get_methods()
+            h['Access-Control-Max-Age'] = str(max_age)
+            if headers is not None:
+                h['Access-Control-Allow-Headers'] = headers
+            return resp
+
+        f.provide_automatic_options = False
+        return update_wrapper(wrapped_function, f)
+    return decorator
 
 def setup_db():
     """ checks to see if the database is setup and sets if up if it doesn't"""
@@ -160,11 +205,13 @@ def register_patron(form):
 
     email_hash = sha512(form.get("g587-email","").lower().encode()).hexdigest()   
     headers={"Cookie": 'SESSION_LANGUAGE=eng; SESSION_SCOPE=0; III_EXPT_FILE=aa31292'}
-    add_patron_result = requests.post(app.config.get('SIERRA_URL'),
-                                       data=data,
-                                       headers=headers)
-    if add_patron_result.status_code < 399:
-        temp_card_number = find_card_number(add_patron_result.text)
+    # add_patron_result = requests.post(app.config.get('SIERRA_URL'),
+    #                                    data=data,
+    #                                    headers=headers)
+    # if add_patron_result.status_code < 399:
+    if True:
+        #temp_card_number = find_card_number(add_patron_result.text)
+        temp_card_number = 12345
         if temp_card_number is not None:
             con = sqlite3.connect(DB_PATH)
             cur = con.cursor()
@@ -178,7 +225,7 @@ def register_patron(form):
             con.commit()
             cur.close()
             con.close()
-            email_notification(form)
+            #email_notification(form)
             return temp_card_number
         else:
             return None
@@ -245,7 +292,6 @@ def validate_form(form):
 def report():
     return "IN REPORT"
 
-@app.route("/email_check")
 def email_check(**kwargs):
     """ Checks to see if the email address as has already been registered 
 
@@ -253,13 +299,9 @@ def email_check(**kwargs):
             g587-email: the email address to check
     """
     # test to see if the function is being called by a request
-    return_dict = False
-    if kwargs.get("email"):
-        return_dict = True
 
-    email_value = kwargs.get("email",
-                             request.args.get("g587-email","")).lower()
-    debug_on = kwargs.get("debug",request.args.get("debug",False))
+    email_value = kwargs.get("email","").lower()
+    debug_on = kwargs.get("debug",False)
     is_valid = validate_email(email_value)
     if not is_valid:
         valid = False
@@ -279,25 +321,29 @@ def email_check(**kwargs):
                                "validate_email": is_valid,
                                "db_email_check": email_check
                            }
-    if return_dict:
-        return rtn_msg
-    else:
-        return jsonify(rtn_msg)
+    return rtn_msg
 
-@app.route("/postal_code")
+@app.route("/email_check")
+@crossdomain(origin=CROSS_DOMAIN_SITE)
+def request_email_check(**kwargs):
+    """ Checks to see if the email address as has already been registered 
+
+        request args:
+            g587-email: the email address to check
+    """
+    rtn_msg = email_check(email=request.args.get("g587-email","").lower(),
+                          debug=request.args.get("debug",False))
+    return jsonify(rtn_msg)
+
 def postal_code(**kwargs):
     """ Checks to see if the email address as has already been registered 
 
         request args:
             g587-email: the email address to check
     """
-    return_dict = False
-    if kwargs.get("zipcode"):
-        return_dict = True
 
-    postal_value = kwargs.get("zipcode",
-                              request.args.get("g587-zipcode",""))
-    debug_on = kwargs.get("debug",request.args.get("debug",False))
+    postal_value = kwargs.get("zipcode","")
+    debug_on = kwargs.get("debug",False)
     valid = False
     message = "Enter all 5 digits"
     data = []
@@ -321,13 +367,22 @@ def postal_code(**kwargs):
         rtn_msg["debug"] = {
                                "postal_code":postal_value
                            }
-    print("Return dict is {}".format(return_dict))
-    if return_dict:
-        return rtn_msg
-    else:
-        return jsonify(rtn_msg)
+    return rtn_msg
+
+@app.route("/postal_code")
+@crossdomain(origin=CROSS_DOMAIN_SITE)
+def request_postal_code(**kwargs):
+    """ Checks to see if the email address as has already been registered 
+
+        request args:
+            g587-email: the email address to check
+    """
+    rtn_msg = postal_code(zipcode=request.args.get("g587-zipcode",""),
+                          debug=request.args.get("debug",False))
+    return jsonify(rtn_msg)
 
 @app.route("/", methods=["POST"])
+@crossdomain(origin=CROSS_DOMAIN_SITE)
 def index():
     """Default view for handling post submissions from a posted form"""
     setup_db() 
