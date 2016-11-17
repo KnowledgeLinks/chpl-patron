@@ -191,14 +191,16 @@ def register_patron(form):
     Args:
         form
     """
+    addr_string = form.get("g587-address")
+    addr_string += "\{}, {} {}".format(
+        form.get("g587-city"),
+        form.get("g587-state"),
+        form.get("g587-zipcode"))
     data =  {
                 "nfirst": form.get("g587-firstname"), 
                 "nlast": form.get("g587-lastname"),
                 "F051birthdate": form.get("g587-birthday"),
-                "stre_aaddress": form.get("g587-address"),
-                "city_aaddress": form.get("g587-city"),
-                "stat_aaddress": form.get("g587-state"),
-                "post_aaddress": form.get("g587-zipcode"),
+                "full_aaddress": addr_string,
                 "tphone1": form.get("g587-telephone"),
                 "zemailaddr": form.get("g587-email","").lower()
             }
@@ -223,7 +225,8 @@ def register_patron(form):
             con.commit()
             cur.close()
             con.close()
-            email_notification(form)
+            pin_reset_result = requests.post(app.config.get("PIN_RESET_URL"),
+                data={"code": temp_card_number})
             return temp_card_number
         else:
             return None
