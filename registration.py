@@ -103,7 +103,6 @@ def setup_postalcodes():
             postalcodes_setup = True
 
     if not postalcodes_setup:
-        print("Setting Postal Codes")
         delete_tbl_sql = "DROP TABLE IF EXISTS postalcodes"
         create_tbl_sql = """CREATE TABLE IF NOT EXISTS postalcodes (
                              id integer PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -184,6 +183,24 @@ def find_card_number(raw_html):
     if result is not None:
         return result.groups()[0]
 
+
+def pin_reset(temp_pin):
+    """Takes a temporary pin and calls III's PIN reset form and returns message
+    if successful.
+
+    Args:
+        temp_pin(str): Temporary card pin
+
+    Returns:
+        string: PIN Reset
+    """
+    pin_reset_result = requests.post(app.config.get("PIN_RESET_URL"),
+        data={"code": temp_pin})
+    if pin_reset_result.status_code > 399:
+        return False
+    return True
+     
+ 
 def register_patron(form):
     """send the patron data to iii and adds a hash of the registered email
     to the local sqlite db
@@ -222,11 +239,12 @@ def register_patron(form):
                     VALUES (?,?);""", (email_hash, temp_card_number,))
             except sqllite3.IntegrityError:
                 pass
+            
             con.commit()
             cur.close()
             con.close()
-            pin_reset_result = requests.post(app.config.get("PIN_RESET_URL"),
-                data={"code": temp_card_number})
+            if not pin_reset(temp_card_number):
+                return "Failed to reset {}".format(temp_card_number)
             return temp_card_number
         else:
             return None
@@ -284,10 +302,6 @@ def validate_form(form):
     if len(errors) > 0:
         valid = False
     return {"valid":valid, "errors":errors, "form":form}
-
-@app.route("/report")
-def report():
-    return "IN REPORT"
 
 def email_check(**kwargs):
     """ Checks to see if the email address as has already been registered 
