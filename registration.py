@@ -3,6 +3,7 @@ __author__ = "Jeremy Nelson, Mike Stabile"
 
 import csv
 import os
+import pdb
 import re
 import requests
 import smtplib
@@ -209,7 +210,7 @@ def register_patron(form):
         form
     """
     addr_string = form.get("g587-address")
-    addr_string += "\{}, {} {}".format(
+    addr_string2 += "{}, {} {}".format(
         form.get("g587-city"),
         form.get("g587-state"),
         form.get("g587-zipcode"))
@@ -217,7 +218,7 @@ def register_patron(form):
                 "nfirst": form.get("g587-firstname"), 
                 "nlast": form.get("g587-lastname"),
                 "F051birthdate": form.get("g587-birthday"),
-                "full_aaddress": addr_string,
+                "full_aaddress": [addr_string, addr_string2],
                 "tphone1": form.get("g587-telephone"),
                 "zemailaddr": form.get("g587-email","").lower()
             }
