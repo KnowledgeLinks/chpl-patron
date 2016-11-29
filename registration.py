@@ -210,7 +210,7 @@ def register_patron(form):
         form
     """
     addr_string = form.get("g587-address")
-    addr_string2 += "{}, {} {}".format(
+    addr_string2 = "{}, {} {}".format(
         form.get("g587-city"),
         form.get("g587-state"),
         form.get("g587-zipcode"))
