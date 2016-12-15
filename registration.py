@@ -412,7 +412,7 @@ def index():
         else:
             return jsonify({"valid": True,
                             "url": "{}?error={}".format(
-                                    app.conf.get("ERROR_URI"),
+                                    app.config.get("ERROR_URI"),
                                     "Failed to register Patron")})
     else:
         #return redirect(request.referrer, code=304)
