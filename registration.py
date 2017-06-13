@@ -238,7 +238,7 @@ def register_patron(form):
                 cur.execute("""INSERT INTO LibraryCardRequest 
                            (email, temp_number) 
                     VALUES (?,?);""", (email_hash, temp_card_number,))
-            except sqllite3.IntegrityError:
+            except sqlite3.IntegrityError:
                 pass
             
             con.commit()
