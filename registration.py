@@ -405,9 +405,13 @@ def index():
     if valid_form['valid']:
         temp_card_number = register_patron(valid_form['form'])
         if temp_card_number is not None:
+            if request.remote_addr.startswith("198.85.222.29"):
+                success_uri = "http://mychpl.org/successful-registration-2/"
+            else:
+                success_uri = app.config.get("SUCCESS_URI")
             return jsonify({"valid": True,
                             "url": "{}?number={}".format(
-                                  app.config.get("SUCCESS_URI"),
+                                  success_uri,
                                   temp_card_number)})
         else:
             return jsonify({"valid": True,
