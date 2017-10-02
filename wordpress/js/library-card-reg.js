@@ -23,7 +23,7 @@ var regValidation = function() {
         var valid = false
         if (value.length == 5) {
             jQuery.ajax({
-                url: 'http://chapelhillpubliclibrary.org:3000/postal_code?g587-zipcode=' + value,
+                url: 'https://chapelhillpubliclibrary.org:3000/postal_code?g587-zipcode=' + value,
                 //url: 'http://localhost:4000/postal_code?g587-zipcode=' + value,
                 crossDomain: true,
                 success: function (result) {
@@ -64,7 +64,7 @@ var regValidation = function() {
                 required: true,
                 email: true,
                 //remote: "http://localhost:4000/email_check"
-                remote: "http://chapelhillpubliclibrary.org:3000/email_check"
+                remote: "https://chapelhillpubliclibrary.org:3000/email_check"
             },
             'g587-birthday': {
                 required: true,
