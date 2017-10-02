@@ -26,7 +26,8 @@ if DB_PATH is None:
     DB_PATH = os.path.join(
         CURRENT_DIR,
         "card-requests.sqlite")
-CROSS_DOMAIN_SITE = "http://chapelhillpubliclibrary.org"
+CROSS_DOMAIN_SITE = app.config.get('CROSS_DOMAIN_SITE',
+                                   "https://chapelhillpubliclibrary.org")
 basestring = (str,bytes)
 
 def crossdomain(origin=None, methods=None, headers=None,
