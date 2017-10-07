@@ -1,0 +1,16 @@
+version: "2.0"
+
+services:
+  registration:
+    build: 
+      context: .
+    ports:
+      - 3000:3000
+
+  web:
+    build:
+      dockerfile: DockerNginx
+    links:
+      - registration:registration
+    ports:
+      - 444:443
