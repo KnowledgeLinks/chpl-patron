@@ -5,12 +5,13 @@ services:
     build: 
       context: .
     ports:
-      - 3000:3000
+      - 3000
 
   web:
     build:
+      context: .
       dockerfile: DockerNginx
     links:
       - registration:registration
     ports:
-      - 444:443
+      - "444:443"

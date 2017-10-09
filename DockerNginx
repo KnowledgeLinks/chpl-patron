@@ -1,14 +1,10 @@
 # Dockerfile for Chapel Hills Public Library Patron Registration
-FROM python:3.6.3
+FROM debian:buster
 MAINTAINER Jeremy Nelson <jermnelson@gmail.com>
-
-ENV HOME /opt/chpl-patron
-RUN apt-get update && mkdir -p $HOME
-COPY db-schema.sql $HOME
-COPY iii $HOME
-COPY postalcodes $HOME
-COPY registration.py $HOME
-COPY requirements.txt $HOME
-RUN cd $HOME && pip install -r requirements.txt
-WORKDIR $HOME
-CMD ["nohup", "gunicorn", "-b", "0.0.0.0:3000", "registration:app"]
+RUN apt-get update && apt-get install -y nginx
+RUN mkdir /etc/nginx/ssl && rm /etc/nginx/sites-available/default && \
+   rm /etc/nginx/sites-enabled/default
+COPY patron-nginx.conf /etc/nginx/conf.d/
+COPY instance/fullchain.pem /etc/nginx/ssl/
+COPY instance/privatekey.pem /etc/nginx/ssl/
+CMD ["nginx", "-g", "daemon off;"]

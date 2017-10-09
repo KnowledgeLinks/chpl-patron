@@ -3,9 +3,9 @@ FROM python:3.6.3
 MAINTAINER Jeremy Nelson <jermnelson@gmail.com>
 
 ENV HOME /opt/chpl-patron
-RUN apt-get update && mkdir -p $HOME
+RUN apt-get update && mkdir -p $HOME && mkdir $HOME/instance
 COPY db-schema.sql $HOME
-COPY instance $HOME/instance
+COPY instance/config.py $HOME/instance/config.py
 COPY iii $HOME/iii
 COPY postalcodes $HOME/postalcodes
 COPY registration.py $HOME
