@@ -143,7 +143,7 @@ def email_notification(form):
     Args:
         db_result(list): List of data from the database query
     """
-    email = form.get("g587-email","").lower()
+    email = form.get("g587-email","").lower().strip()
     body = """New Library Card Request
 Name: {0} {1}
 Birthday: {2}
@@ -221,10 +221,10 @@ def register_patron(form):
                 "F051birthdate": form.get("g587-birthday"),
                 "full_aaddress": [addr_string, addr_string2],
                 "tphone1": form.get("g587-telephone"),
-                "zemailaddr": form.get("g587-email","").lower()
+                "zemailaddr": form.get("g587-email","").lower().strip()
             }
 
-    email_hash = sha512(form.get("g587-email","").lower().encode()).hexdigest()   
+    email_hash = sha512(form.get("g587-email","").lower().strip().encode()).hexdigest()   
     headers={"Cookie": 'SESSION_LANGUAGE=eng; SESSION_SCOPE=0; III_EXPT_FILE=aa31292'}
     add_patron_result = requests.post(app.config.get('SIERRA_URL'),
                                        data=data,
@@ -261,7 +261,7 @@ def db_email_check(email_value=None):
     """
     return_val = False
     if email_value:
-        email_hash = sha512(email_value.lower().encode()).hexdigest()
+        email_hash = sha512(email_value.lower().strip().encode()).hexdigest()
         con = sqlite3.connect(DB_PATH)
         cur = con.cursor()
         found = bool(cur.execute("""SELECT count(*) FROM LibraryCardRequest
@@ -313,7 +313,7 @@ def email_check(**kwargs):
     """
     # test to see if the function is being called by a request
 
-    email_value = kwargs.get("email","").lower()
+    email_value = kwargs.get("email","").lower().strip()
     debug_on = kwargs.get("debug",False)
     is_valid = validate_email(email_value)
     if not is_valid:
