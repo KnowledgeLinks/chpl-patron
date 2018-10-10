@@ -1,3 +1,6 @@
+API documentation 
+https://sandbox.iii.com/iii/sierra-api/swagger/index.html#!/patrons/Create_a_patron_record_post_0
+
 Chapel hill python scrip: https://github.com/townofchapelhill/chccs-post-update
 
 [FLSK]: http://flask.pocoo.org/
