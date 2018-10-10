@@ -1,3 +1,6 @@
+address checker 
+https://chapelhillpubliclibrary.org/patroncheck/
+
 API documentation 
 https://sandbox.iii.com/iii/sierra-api/swagger/index.html#!/patrons/Create_a_patron_record_post_0
 
