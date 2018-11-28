@@ -7,9 +7,8 @@ class Test_get_token(unittest.TestCase):
         pass
 
     def test_get_token(self):
-        result = sierra.get_token()
-        self.assertEqual(result.status_code,
-                         404)
+        token = sierra.get_token()
+        self.assertIsNotNone(token)
 
     def tearDown(self):
         pass

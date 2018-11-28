@@ -14,11 +14,13 @@ def get_token():
     encoded_key = base64.b64encode("{}:{}".format(instance.API_KEY, 
         instance.CLIENT_SECRET).encode())
     headers = {
-       "Authorization": "Basic {}".format(encoded_key), 
+       "Authorization": "Basic {}".format(encoded_key.decode()), 
        "Content-Type": "application/x-www-form-urlencoded"
     }
-    response = requests.post(TOKEN_URL, headers=headers)
-    import pdb; pdb.set_trace()
+    response = requests.post(TOKEN_URL, 
+        headers=headers,
+        data="grant_type=client_credentials")
+    
     if response.status_code < 399:
         return response.json().get("access_token")
     raise ValueError("{} get_token request status code: {}".format(
@@ -32,4 +34,4 @@ def register(payload):
         "Authorization": "Bearer {}".format(get_token()),
         "Content-Type": "application/json"
     } 
-    result = requests.posti(PATRON_URL)
+    result = requests.post(PATRON_URL)
