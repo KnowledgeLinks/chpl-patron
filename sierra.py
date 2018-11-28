@@ -34,4 +34,5 @@ def register(payload):
         "Authorization": "Bearer {}".format(get_token()),
         "Content-Type": "application/json"
     } 
-    result = requests.post(PATRON_URL)
+    result = requests.post(PATRON_URL, headers=headers)
+    return result
