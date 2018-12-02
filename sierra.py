@@ -43,8 +43,7 @@ def get_headers():
 
 
 def register(payload):
-
-    result = requests.post(PATRON_URL, headers=get_headers())
+    result = requests.post(PATRON_URL, headers=get_headers(), data=payload)
     return result
 
 
@@ -54,7 +53,6 @@ def email_check(email_value=None):
     args:
         email_value: the email address to search for
     """
-    api_url = "/v5/patrons/query?offset=0&limit=1"
     json_qry = {
                     "target": {
                         "record": {"type": "patron"},
