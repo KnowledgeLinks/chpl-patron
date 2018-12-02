@@ -1,6 +1,7 @@
 import unittest
 import sierra 
 
+
 class Test_get_token(unittest.TestCase):
 
     def setUp(self):
@@ -12,6 +13,7 @@ class Test_get_token(unittest.TestCase):
 
     def tearDown(self):
         pass
+
 
 class Test_register(unittest.TestCase):
 
@@ -26,6 +28,18 @@ class Test_register(unittest.TestCase):
                          130)
         self.assertEqual(result.json().get('name'),
             'Bad JSON/XML Syntax')
+
+    def tearDown(self):
+        pass
+
+class Test_email_check(unittest.TestCase):
+
+    def setUp(self):
+        pass
+
+    def test_register_empty_payload(self):
+        result = sierra.email_check("mstabile75@gmail.com")
+        print(result.text)
 
     def tearDown(self):
         pass

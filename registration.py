@@ -9,6 +9,8 @@ import requests
 import smtplib
 import sqlite3
 import dateutil
+import geosearch
+from chplexceptions import *
 from email.mime.text import MIMEText
 from flask import Flask, make_response, request, current_app, jsonify, abort, redirect
 from validate_email import validate_email
@@ -21,14 +23,11 @@ app = Flask(__name__, instance_relative_config=True)
 app.config.from_pyfile("config.py")
 
 CURRENT_DIR = os.path.abspath(os.curdir)
-DB_PATH = app.config.get("DB_PATH")
-if DB_PATH is None:
-    DB_PATH = os.path.join(
-        CURRENT_DIR,
-        "card-requests.sqlite")
+
 CROSS_DOMAIN_SITE = app.config.get('CROSS_DOMAIN_SITE',
                                    "https://chapelhillpubliclibrary.org")
-basestring = (str,bytes)
+basestring = (str, bytes)
+
 
 def crossdomain(origin=None, methods=None, headers=None,
                 max_age=21600, attach_to_all=True,
@@ -71,71 +70,6 @@ def crossdomain(origin=None, methods=None, headers=None,
         return update_wrapper(wrapped_function, f)
     return decorator
 
-def setup_db():
-    """ checks to see if the database is setup and sets if up if it doesn't"""
-
-    if not os.path.exists(DB_PATH):
-        con = sqlite3.connect(DB_PATH)
-        cur = con.cursor()
-        with open(os.path.join(CURRENT_DIR, "db-schema.sql")) as script_fo:
-            script = script_fo.read()
-            cur.executescript(script)
-        cur.close()
-        con.close()
-        setup_postalcodes()
-
-def setup_postalcodes():
-    """Setups up the database with postal codes if not already added to the
-    the database"""
-
-    con = sqlite3.connect(DB_PATH)
-    postalcodes_setup = False
-
-    # test to see if the table exists
-    qry = """SELECT name 
-             FROM sqlite_master 
-             WHERE type='table' AND name='postalcodes';"""
-
-    cur = con.cursor()
-
-    # get the row count... if the row count is small reload the table
-    if bool(len(cur.execute(qry).fetchall())):
-        count = cur.execute("SELECT count(*) FROM postalcodes;").fetchone()
-        if count[0] > 1000:
-            postalcodes_setup = True
-
-    if not postalcodes_setup:
-        delete_tbl_sql = "DROP TABLE IF EXISTS postalcodes"
-        create_tbl_sql = """CREATE TABLE IF NOT EXISTS postalcodes (
-                             id integer PRIMARY KEY AUTOINCREMENT NOT NULL,
-                             postal_code text NOT NULL,
-                             city text NOT NULL,
-                             state_long text NOT NULL,
-                             state_short text,
-                             lat text,
-                             long text
-                            ) ;"""
-        ins_qry = """INSERT INTO postalcodes 
-                    (postal_code, 
-                     city,
-                     state_long, 
-                     state_short, 
-                     lat, 
-                     long) 
-                     VALUES (?,?,?,?,?,?)"""
-        cur.execute(delete_tbl_sql)
-        con.commit()
-        cur.execute(create_tbl_sql)
-        con.commit()
-
-        # read the datafile and add to the database
-        with open(os.path.join(CURRENT_DIR,"postalcodes","US.txt"), "r") as data:
-            pcodes = list(csv.reader(data, delimiter='\t'))
-            for ln in pcodes:
-                cur.execute(ins_qry,(ln[1], ln[2], ln[3], ln[4], ln[9], ln[10]))
-        con.commit()
-        cur.close()
-        con.close()
 
 def email_notification(form):
     """Sends an email notification of new card request
@@ -172,6 +106,8 @@ Temporary Library Card Number: {9}
     mail_server.quit()
 
 TEMP_CARD_RE = re.compile(r"Your barcode is: <b>\n(\w+)</b>")
+
+
 def find_card_number(raw_html):
     """Takes raw HTML from III and searches for temporary barcode number in the
     result.
@@ -187,7 +123,8 @@ def find_card_number(raw_html):
 
 
 def pin_reset(temp_pin):
-    """Takes a temporary pin and calls III's PIN reset form and returns message
+    """
+    Takes a temporary pin and calls III's PIN reset form and returns message
     if successful.
 
     Args:
@@ -204,7 +141,8 @@ def pin_reset(temp_pin):
      
  
 def register_patron(form):
-    """send the patron data to iii and adds a hash of the registered email
+    """
+    send the patron data to iii and adds a hash of the registered email
     to the local sqlite db
 
     Args:
@@ -253,13 +191,24 @@ def register_patron(form):
     else:
         None
 
-def db_email_check(email_value=None):
-    """Tests to see if the database already has the supplied email address
+def sierra_email_check(email_value=None):
+    """Tests to see if the email has already been registered
 
     args:
         email_value: the email address to search for
     """
-    return_val = False
+    api_url = "/v5/patrons/query?offset=0&limit=1"
+    json_qry = {
+                    "target": {
+                        "record": {"type": "patron"},
+                         "field": {"tag": "emails"}
+                    },
+                    "expr": {
+                        "op": "equals",
+                        "operands": [email_value]
+                    }
+                }
+
     if email_value:
         email_hash = sha512(email_value.lower().strip().encode()).hexdigest()
         con = sqlite3.connect(DB_PATH)
@@ -344,15 +293,16 @@ def request_email_check(**kwargs):
         request args:
             g587-email: the email address to check
     """
-    rtn_msg = email_check(email=request.args.get("g587-email","").lower(),
+    rtn_msg = email_check(email=request.args.get("g587-email", "").lower(),
                           debug=request.args.get("debug",False))
     return jsonify(rtn_msg)
 
+
 def postal_code(**kwargs):
-    """ Checks to see if the email address as has already been registered 
+    """ Checks the postal code
 
         request args:
-            g587-email: the email address to check
+            zipcode: the postal code to check
     """
 
     postal_value = kwargs.get("zipcode","")
@@ -361,44 +311,37 @@ def postal_code(**kwargs):
     message = "Enter all 5 digits"
     data = []
     if len(postal_value) == 5:
-        con = sqlite3.connect(DB_PATH)
-        con.row_factory = sqlite3.Row
-        cur = con.cursor()
-        codes = cur.execute("SELECT * FROM postalcodes WHERE postal_code = ?",
-                            (postal_value,)).fetchall()
-        if len(codes) > 0:
+        try:
+            locations = geosearch.get_locale_from_postal_code(postal_value)
             valid = True
-            data = [dict(ix) for ix in codes]
+            data = [dict(ix.city) for ix in locations]
             message = ""
-        else:
+        except InvalidPostalCode:
             message = "Enter a valid US postal code"
     rtn_msg = {"valid":valid, 
                "message":message,
                "data":data}
     if debug_on:
-        email_check = db_email_check(email_value)
         rtn_msg["debug"] = {
-                               "postal_code":postal_value
+                               "postal_code": postal_value
                            }
     return rtn_msg
+
 
 @app.route("/postal_code")
 @crossdomain(origin=CROSS_DOMAIN_SITE)
 def request_postal_code(**kwargs):
-    """ Checks to see if the email address as has already been registered 
-
-        request args:
-            g587-email: the email address to check
+    """ gets the associated cities for the specified postal code
     """
     rtn_msg = postal_code(zipcode=request.args.get("g587-zipcode",""),
                           debug=request.args.get("debug",False))
     return jsonify(rtn_msg)
 
+
 @app.route("/", methods=["POST"])
 @crossdomain(origin=CROSS_DOMAIN_SITE)
 def index():
     """Default view for handling post submissions from a posted form"""
-    setup_db() 
     if not request.method.startswith("POST"):
         return "Method not supported"
     form = request.form.to_dict()
@@ -420,9 +363,9 @@ def index():
                                     app.config.get("ERROR_URI"),
                                     "Failed to register Patron")})
     else:
-        #return redirect(request.referrer, code=304)
         return jsonify(valid_form)
-        
+
+
 @app.route("/test_form", methods=['GET', 'POST'])
 def test_form():
     form_path = os.path.join(CURRENT_DIR,"wordpress","currentform.txt")
@@ -431,7 +374,7 @@ def test_form():
         html = form_file.read()
     return html.replace("104.131.189.93", "localhost")
 
+
 if __name__ == '__main__':
     print("Starting Chapel Hills Patron Registration")
-    setup_db()
     app.run(host='0.0.0.0', port=4000, debug=True)
