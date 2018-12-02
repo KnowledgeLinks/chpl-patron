@@ -1,4 +1,5 @@
 instance/
+*.idea/
 *.swp
 *.sqlite
 __pycache__*
