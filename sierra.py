@@ -3,8 +3,8 @@ import json
 import requests
 import instance
 
-SIERRA_API = "https://catalog.chapelhillpubliclibrary.org/iii/sierra-api/v5/"
-# SIERRA_API = "https://sandbox.iii.com:443/iii/sierra-api/v5/patrons/"
+# SIERRA_API = "https://catalog.chapelhillpubliclibrary.org/iii/sierra-api/v5/"
+SIERRA_API = "https://sandbox.iii.com:443/iii/sierra-api/v5/patrons/"
 
 PATRON_URL = "{0}patrons/".format(SIERRA_API)
 TOKEN_URL = "{0}token".format(SIERRA_API)
@@ -34,5 +34,5 @@ def register(payload):
         "Authorization": "Bearer {}".format(get_token()),
         "Content-Type": "application/json"
     } 
-    result = requests.post(PATRON_URL, headers=headers)
+    result = requests.post(PATRON_URL, headers=headers, data=payload)
     return result
