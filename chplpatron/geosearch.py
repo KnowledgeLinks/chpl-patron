@@ -2,9 +2,8 @@
 Module for validating address information for a patron
 """
 import requests
-import instance
 
-from chplexceptions import *
+from chplpatron.chplexceptions import *
 
 POSTAL_CODE_CHECK_URL = ("https://geocode.arcgis.com/arcgis/rest/services/"
                          "World/GeocodeServer/find?text={}&f=pjson")

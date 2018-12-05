@@ -5,12 +5,12 @@ import csv
 import os
 import sqlite3
 
-from chplexceptions import InvalidPostalCode
+from chplpatron.chplexceptions import InvalidPostalCode
 
 POSTAL_DB_SETUP = None
 CURRENT_DIR = os.path.abspath(os.curdir)
 DB_PATH = os.path.join(CURRENT_DIR, "postal-db.sqlite")
-POSTAL_CSV = os.path.join(CURRENT_DIR, "postalcodes", "US.txt")
+POSTAL_CSV = os.path.join(CURRENT_DIR, "resources", "US.txt")
 
 
 def setup():
@@ -24,20 +24,20 @@ def setup():
     # --- test row count --------------------------------------------
     qry = ("SELECT name "
            "FROM sqlite_master "
-           "WHERE type='table' AND name='postalcodes';")
+           "WHERE type='table' AND name='resources';")
     count = [0]
     if bool(len(cur.execute(qry).fetchall())):
-        count = cur.execute("SELECT count(*) FROM postalcodes;").fetchone()
+        count = cur.execute("SELECT count(*) FROM resources;").fetchone()
     if count[0] > 1000:
         POSTAL_DB_SETUP = True
         return
 
     # --- row count was too small --> reload ------------------------
     # Drop table
-    cur.execute("DROP TABLE IF EXISTS postalcodes")
+    cur.execute("DROP TABLE IF EXISTS resources")
     con.commit()
     # Create table
-    cur.execute("CREATE TABLE IF NOT EXISTS postalcodes ("
+    cur.execute("CREATE TABLE IF NOT EXISTS resources ("
                 "id integer PRIMARY KEY AUTOINCREMENT NOT NULL, "
                 "postal_code text NOT NULL, "
                 "city text NOT NULL, "
@@ -47,7 +47,7 @@ def setup():
                 "long text) ;")
     con.commit()
     # load data
-    ins_qry = ("INSERT INTO postalcodes ("
+    ins_qry = ("INSERT INTO resources ("
                "postal_code, "
                "city, "
                "state_long, "
@@ -83,7 +83,7 @@ def get_locale_from_postal_code(postal_value):
         cities = cur.execute("SELECT state_long as state, "
                              "postal_code, "
                              "city "
-                             "FROM postalcodes WHERE postal_code = ?",
+                             "FROM resources WHERE postal_code = ?",
                              (postal_value,)).fetchall()
         if len(cities) > 0:
             return [dict(city) for city in cities]

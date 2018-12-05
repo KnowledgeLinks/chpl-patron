@@ -1,18 +1,15 @@
 """Chapel Hill Public Library Patron Self-Registration"""
 __author__ = "Jeremy Nelson, Mike Stabile"
 
-import csv
 import os
-import pdb
 import re
 import requests
 import smtplib
 import sqlite3
-import dateutil
-import geosearch
-from chplexceptions import *
+from chplpatron import geosearch
+from chplpatron.chplexceptions import *
 from email.mime.text import MIMEText
-from flask import Flask, make_response, request, current_app, jsonify, abort, redirect
+from flask import Flask, make_response, request, current_app, jsonify
 from validate_email import validate_email
 from hashlib import sha512
 from dateutil.parser import parse as date_parse
@@ -105,6 +102,7 @@ Temporary Library Card Number: {9}
     mail_server.send_message(msg)
     mail_server.quit()
 
+
 TEMP_CARD_RE = re.compile(r"Your barcode is: <b>\n(\w+)</b>")
 
 
@@ -191,6 +189,7 @@ def register_patron(form):
     else:
         None
 
+
 def sierra_email_check(email_value=None):
     """Tests to see if the email has already been registered
 
@@ -220,6 +219,7 @@ def sierra_email_check(email_value=None):
         cur.close()
         con.close()
     return return_val
+
 
 def validate_form(form):
     """validates the form data before saving

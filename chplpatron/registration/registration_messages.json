@@ -1,0 +1,4 @@
+{
+  "withinBoundary": "Your address is within our patron boundary. Please go to circulation desk on your next visit to pick up your card",
+  "notWithinBoundary": "Your address in not within the library boundary. ...."
+}
