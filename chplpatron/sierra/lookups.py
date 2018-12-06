@@ -1,23 +1,37 @@
+"""
+Module providing lookup type information, i.e. urls, field names and
+associated functions and classes
+"""
+
 import urllib
 
 from enum import Enum
 
 PRODUCTION_URL = ("https://catalog.chapelhillpubliclibrary.org/"
                   "iii/sierra-api/v5/")
-SANDBOX_URL = "https://sandbox.iii.com/iii/sierra-api/swagger/"
+SANDBOX_URL = "https://sandbox.iii.com:443/iii/sierra-api/v5/"
 
 
 class UrlMode(Enum):
+    """
+    Provides the options for different modes with associated url values.
+    """
     production = PRODUCTION_URL
     sandbox = SANDBOX_URL
 
 
 class ReqMethods(Enum):
+    """
+    Provides a list of allowed requests methods for use in the application
+    """
     get = "get"
     post = "post"
 
 
 class PatronFlds(Enum):
+    """
+    Enumerates the available fields for use with patron records
+    """
     id = 'id'
     updatedDate = 'updatedDate'
     createdDate = 'createdDate'
@@ -45,10 +59,20 @@ class PatronFlds(Enum):
 
     @classmethod
     def list_all(cls):
+        """
+        :return: a comma separated list of all fields
+        """
         return ",".join([fld.name for fld in cls])
 
 
 class ApiSpec:
+    """
+    Specifications for an API endpoint
+
+    :param url: portion of the url to add to the base url
+    :param method: ReqMethods option for the endpoint
+    :param params: list of available parameters
+    """
     __SLOTS__ = ["method", "params", "url"]
     methods = ReqMethods
 
@@ -59,6 +83,9 @@ class ApiSpec:
 
 
 class ApiUrls(Enum):
+    """
+    Enumeration of available API endpoint and ApiSpecs
+    """
     create_patron = ApiSpec("patrons", ReqMethods.post)
     patron = ApiSpec("patrons",
                      ReqMethods.get,
@@ -84,14 +111,25 @@ class ApiUrls(Enum):
 
 class Urls:
     """
-    Formats urls with supplied UrlMode
+    Url formatting class for specified API endpoints
+
+    :param url_mode: ["production", "sandbox"] specifies which base url to use
+
+    :usage:
+        url.[ApiUrls name](parameters)
+
+    :example:
+        url = Url("production")
+        req_url = url.find(["n", "DOE, JOHN])
+        print(req_url)
+        'https://.../../patrons/find?varFieldTag=n&varFieldContent=DOE%2C+JOHN'
     """
     modes = UrlMode
     base_url = modes.production
     api_specs = ApiUrls
 
     def __init__(self, url_mode="production"):
-        _base_url = getattr(self.modes, url_mode)
+        self.base_url = getattr(self.modes, url_mode)
 
     def __getattr__(self, item):
         try:
@@ -105,6 +143,9 @@ class Urls:
 
 
 class UrlFormatter:
+    """
+    Formats urls with the supplied parameters
+    """
     def __init__(self, api_spec, base_url):
         self.api_spec = api_spec
         self.base_url = base_url
@@ -115,6 +156,10 @@ class UrlFormatter:
         return self.format_url()
 
     def format_url(self):
+        """
+        Formats the url
+        :return: a formatted url
+        """
         params = self.format_params()
         url = "{}{}".format(self.base_url, self.api_spec.value.url)
         if params:
@@ -123,6 +168,11 @@ class UrlFormatter:
         return url
 
     def format_params(self):
+        """
+        Formats the supplied parameters
+
+        :return: formatted parameters string
+        """
         params = None
         if self.params:
             if isinstance(self.params, list):
@@ -147,6 +197,9 @@ class UrlFormatter:
 
 
 class InvalidParameter(Exception):
+    """
+    Exception for a parameter violation
+    """
     def __init__(self, name, allowed, supplied):
         if not isinstance(allowed, list):
             super().__init__("No parameters are allowed in '{}'".format(name))

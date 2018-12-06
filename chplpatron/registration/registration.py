@@ -7,7 +7,7 @@ import requests
 import smtplib
 import sqlite3
 from chplpatron import geosearch
-from chplpatron.chplexceptions import *
+from chplpatron.exceptions import *
 from email.mime.text import MIMEText
 from flask import Flask, make_response, request, current_app, jsonify
 from validate_email import validate_email

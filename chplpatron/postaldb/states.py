@@ -3,7 +3,7 @@ State lookup module for converting between State abbreviations and full names
 
 """
 
-from chplpatron.chplexceptions import InvalidState
+from chplpatron.exceptions import InvalidState
 
 __DATA__ = [
     ('Alabama', 'AL'),

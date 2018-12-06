@@ -1,7 +1,7 @@
 import unittest
 from chplpatron.postaldb import states
 
-from chplpatron.chplexceptions import InvalidState
+from chplpatron.exceptions import InvalidState
 
 
 class Test_States(unittest.TestCase):
