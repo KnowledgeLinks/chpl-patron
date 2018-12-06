@@ -84,7 +84,7 @@ class ApiSpec:
 
 class ApiUrls(Enum):
     """
-    Enumeration of available API endpoint and ApiSpecs
+    Enumeration of available API endpoints and ApiSpecs
     """
     create_patron = ApiSpec("patrons", ReqMethods.post)
     patron = ApiSpec("patrons",
@@ -119,7 +119,7 @@ class Urls:
         url.[ApiUrls name](parameters)
 
     :example:
-        url = Url("production")
+        url = Urls("production")
         req_url = url.find(["n", "DOE, JOHN])
         print(req_url)
         'https://.../../patrons/find?varFieldTag=n&varFieldContent=DOE%2C+JOHN'

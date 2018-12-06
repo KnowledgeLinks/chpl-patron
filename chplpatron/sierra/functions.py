@@ -13,7 +13,7 @@ URLS = Urls("production")  # "sandbox"
 TOKEN = None
 # the time that the token expires
 TOKEN_TIME = datetime.datetime.now()
-REQ_TOKEN_ROLES = set(['Patrons_Read', 'Patrons_Write'])
+REQ_TOKEN_ROLES = {'Patrons_Read', 'Patrons_Write'}
 
 
 def get_headers():
