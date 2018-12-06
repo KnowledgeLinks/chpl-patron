@@ -1,7 +1,7 @@
 import unittest
 import chplpatron.sierra as sierra
 
-from chplpatron.chplexceptions import *
+from chplpatron.exceptions import *
 
 
 class Test_get_token(unittest.TestCase):
@@ -23,7 +23,7 @@ class Test_register(unittest.TestCase):
         pass
 
     def test_register_empty_payload(self):
-        result = sierra.register({})
+        result = sierra.create_patron({})
         self.assertEqual(result.status_code,
                          400)
         self.assertEqual(result.json().get('code'),
@@ -35,18 +35,19 @@ class Test_register(unittest.TestCase):
         pass
 
 
-class Test_email_check(unittest.TestCase):
+class Test_check_email(unittest.TestCase):
 
     def setUp(self):
         pass
 
     def test_email(self):
         self.assertRaises(RegisteredEmailError,
-                          sierra.email_check,
+                          sierra.check_email,
                           "stabilemichael@hotmail.com")
-        self.assertTrue(sierra.email_check("not_reg_email@gmail.com"))
+        self.assertTrue(sierra.check_email("not_reg_email@gmail.com"))
         # temp card number 353980
-        
+        pprint.pprint(sierra.lookup_by_email("stabilemichael@hotmail.com"))
+
     def tearDown(self):
         pass
 

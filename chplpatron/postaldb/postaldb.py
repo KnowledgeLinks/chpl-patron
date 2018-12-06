@@ -1,14 +1,16 @@
-"""Chapel Hill Public Library Patron Self-Registration"""
+"""
+Simple postal_code lookup implementation
+"""
 __author__ = "Jeremy Nelson, Mike Stabile"
 
 import csv
 import os
 import sqlite3
 
-from chplpatron.chplexceptions import InvalidPostalCode
+from chplpatron.exceptions import InvalidPostalCode
 
 POSTAL_DB_SETUP = None
-CURRENT_DIR = os.path.abspath(os.curdir)
+CURRENT_DIR = os.path.dirname(__file__)
 DB_PATH = os.path.join(CURRENT_DIR, "postal-db.sqlite")
 POSTAL_CSV = os.path.join(CURRENT_DIR, "resources", "US.txt")
 

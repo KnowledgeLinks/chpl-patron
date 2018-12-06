@@ -1,6 +1,8 @@
-from .functions import (email_check,
+from .functions import (check_email,
                         get_token,
                         get_headers,
-                        register)
+                        create_patron,
+                        lookup_by_email,
+                        get_token_info)
 from .lookups import (PatronFlds,
                       Urls)

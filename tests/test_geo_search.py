@@ -1,7 +1,7 @@
 import unittest
 from chplpatron import geosearch
 
-from chplpatron.chplexceptions import *
+from chplpatron.exceptions import *
 
 
 class Test_GeoSearch(unittest.TestCase):
