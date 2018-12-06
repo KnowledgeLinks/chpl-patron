@@ -25,12 +25,12 @@ class Test_GeoSearch(unittest.TestCase):
         # self.assertGreater(len(geosearch.get_locale_from_postal_code(81137)),
         #                    1)
         postal_code = '22308'
-        locale_info = geosearch.get_locale_from_postal_code(postal_code)[0]
+        locale_info = geosearch.get_postal_code(postal_code)[0]
         self.assertEqual(locale_info['postal_code'], postal_code)
         self.assertEqual(locale_info['city'], 'Alexandria')
         self.assertEqual(locale_info['state'], 'Virginia')
         self.assertRaises(InvalidPostalCode,
-                          geosearch.get_locale_from_postal_code,
+                          geosearch.get_postal_code,
                           '1fsgf2')
 
     def test_get_geocoords_from_address(self):

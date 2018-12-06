@@ -33,7 +33,7 @@ BOUNDARY_CHECK_URL = ("https://gisweb.townofchapelhill.org/arcgis/rest/"
                       "&outSR=102100&returnCountOnly=true&f=json")
 
 
-def get_locale_from_postal_code(postal_code):
+def get_postal_code(postal_code):
     """
     Queries the ARCGIS server for locale information of a zipcode
 
@@ -55,7 +55,7 @@ def get_locale_from_postal_code(postal_code):
 
 
 def update_city(city, postal_code, **kwargs):
-    locations = get_locale_from_postal_code(postal_code)
+    locations = get_postal_code(postal_code)
     for loc in locations:
         if city.strip().lower() == loc['city'].lower():
             kwargs['city'] = loc['city']
