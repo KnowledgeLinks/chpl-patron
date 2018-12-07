@@ -7,6 +7,7 @@ from chplpatron.exceptions import *
 
 from .messages import InvalidMsgs
 
+
 def validate_form(form):
     """validates the form data before saving
 
@@ -29,15 +30,17 @@ def validate_form(form):
         py_date = date_parse(form.get('g587-birthday'))
         form['g587-birthday'] = py_date.strftime('%m/%d/%Y')
     except:
-        errors.append({"field":"g587-birthday",
-                       "valid":False,
-                       "message":"Invalid date format"})
+        errors.append({"field": "g587-birthday",
+                       "valid": False,
+                       "message": "Invalid date format"})
     if len(errors) > 0:
         valid = False
-    return {"valid":valid, "errors":errors, "form":form}
+    return {"valid": valid, "errors": errors, "form": form}
+
 
 def email_check(**kwargs):
-    """ Checks to see if the email address as has already been registered
+    """
+    Checks to see if the email address as has already been registered
 
         request args:
             g587-email: the email address to check
@@ -54,16 +57,16 @@ def email_check(**kwargs):
     else:
         try:
             sierra.check_email(email_value)
-        except RegisteredEmailError as err:
+        except RegisteredEmailError:
             valid = False
-            message: InvalidMsgs.email_reg.value.format(err.email)
+            message: InvalidMsgs.email_reg.value
 
     rtn_msg = {"valid": valid, "message": message}
 
     if debug_on:
         try:
             db_email_check = sierra.check_email(email_value)
-        except RegisteredEmailError as err:
+        except RegisteredEmailError:
             db_email_check = False
         rtn_msg["debug"] = {
                                "email": email_value,
