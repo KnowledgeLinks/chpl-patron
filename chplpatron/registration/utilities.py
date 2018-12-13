@@ -3,6 +3,8 @@ Utility Methods and wrappers for registration app
 """
 __author__ = "Jeremy Nelson, Mike Stabile"
 
+import pdb
+
 from enum import Enum
 from flask import make_response, request, current_app
 from datetime import timedelta
@@ -85,7 +87,7 @@ NAMES_CONCAT = {"separator": ", ",
                 "fields": ["last_name", "first_name"]}
 
 
-class FldAssoc(Enum):
+class Flds():
     first_name = FldSpec("first_name",
                          "g587-firstname",
                          PatronFlds.names,
@@ -114,20 +116,32 @@ class FldAssoc(Enum):
     phone = FldSpec("phone",
                     "g587-telephone",
                     PatronFlds.phones)
+    email = FldSpec("emails",
+                    "g587-email",
+                    PatronFlds.emails.name)
 
+# def convert(data, input, output):
+#     if input == "form":
+#         return form_convert(data, output)
+#     elif input == "db":
+#         return db_convert(data, output)
+#     elif input == "api":
+#         return api_convert(data, output)
+#
+#
+def form_to_api(form):
+    return {
+        "names": ["{0}, {1}".format(form.get(Flds.last_name.frm),
+                                    form.get(Flds.first_name.frm))],
+        Flds.birthday.api: form.get(Flds.birthday.frm),
+        PatronFlds.addresses.name: [", ".join(
+                [form.get(getattr(Flds, fld).frm)
+                 for fld in ADDRESS_CONCAT['fields']])],
+        PatronFlds.phones.name: [form.get(Flds.phone.frm)]
+            }
 
-def convert(data, input, output):
-    if input == "form":
-        return form_convert(data, output)
-    elif input == "db":
-        return db_convert(data, output)
-    elif input == "api":
-        return api_convert(data, output)
-
-
-def form_convert(data, output):
+def api_to_db(data):
     pass
-
 
 def db_convert(data, output):
     pass
