@@ -1,8 +1,0 @@
-CREATE TABLE LibraryCardRequest (
-    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    date DATETIME DEFAULT CURRENT_TIMESTAMP, 
-    date_retrieved DATETIME,
-    temp_number INTEGER,
-    email VARCHAR NOT NULL UNIQUE
-);
-
