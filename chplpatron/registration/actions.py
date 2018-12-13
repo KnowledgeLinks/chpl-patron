@@ -41,7 +41,8 @@ def register_patron(form):
     if result.status_code < 399:
         temp_card_number = find_card_number(result.json())
         if temp_card_number is not None:
-            trackingdb.add_registration(form.get(Flds.email.frm))
+            trackingdb.add_registration(temp_card_number,
+                                        form.get(Flds.email.frm))
             if not pin_reset(temp_card_number):
                 return "Failed to reset {}".format(temp_card_number)
             return temp_card_number
