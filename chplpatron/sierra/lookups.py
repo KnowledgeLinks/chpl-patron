@@ -26,12 +26,14 @@ class ReqMethods(Enum):
     """
     get = "get"
     post = "post"
+    put = "put"
 
 
 class PatronFlds(Enum):
     """
     Enumerates the available fields for use with patron records
     """
+
     id = 'id'
     updatedDate = 'updatedDate'
     createdDate = 'createdDate'
@@ -87,6 +89,8 @@ class ApiUrls(Enum):
     Enumeration of available API endpoints and ApiSpecs
     """
     create_patron = ApiSpec("patrons", ReqMethods.post)
+    patron_update = ApiSpec("patrons/{}",
+                            ReqMethods.put)
     patron = ApiSpec("patrons",
                      ReqMethods.get,
                      params=['offset',
@@ -149,6 +153,10 @@ class UrlFormatter:
     def __init__(self, api_spec, base_url):
         self.api_spec = api_spec
         self.base_url = base_url
+        self.key = False
+        self.key_val = None
+        if "{}" in self.api_spec.value.url:
+            self.key = True
 
     def __call__(self, params=None, data=None):
         self.params = params
@@ -160,11 +168,15 @@ class UrlFormatter:
         Formats the url
         :return: a formatted url
         """
+
         params = self.format_params()
         url = "{}{}".format(self.base_url, self.api_spec.value.url)
+        if self.key:
+            if not self.key_val:
+                raise UrlMissingKeyId(self.api_spec, self.params)
+            url = url.format(self.key_val)
         if params:
             url = "{}?{}".format(url, params)
-        # if self.api_spec.method == ReqMethods.post:
         return url
 
     def format_params(self):
@@ -176,8 +188,12 @@ class UrlFormatter:
         params = None
         if self.params:
             if isinstance(self.params, list):
+                if self.key and not self.key_val:
+                    self.key_val = self.params.pop(0)
                 params = [urllib.parse.quote_plus(str(item))
                           for item in self.params]
+                if not params:
+                    return None
                 try:
                     params = zip(self.api_spec.value.params, params)
                 except TypeError:
@@ -187,12 +203,17 @@ class UrlFormatter:
                 params = "&".join(["{}={}".format(*param)
                                    for param in params
                                    if len(param) > 1 and param[1] is not None])
-            if isinstance(self.params, dict):
+            elif isinstance(self.params, dict):
+                if self.key and not self.key_val:
+                    self.key_val = self.params.pop("key")
                 params = "&".join(["{}={}"
                                   .format(key, urllib.parse.quote_plus(value))
                                    for key, value in self.params.items()])
-            if isinstance(self.params, str):
-                params = self.params
+            else:
+                if self.key and not self.key_val:
+                    self.key_val = self.params
+                else:
+                    params = self.params
         return params
 
 
@@ -211,3 +232,12 @@ class InvalidParameter(Exception):
                              .format(name,
                                      set(supplied).difference(set(allowed)),
                                      allowed))
+
+
+class UrlMissingKeyId(Exception):
+    def __init__(self, api_spec, params):
+        self.api_spec = api_spec
+        self.params = params
+        super().__init__("Key id not supplied for api '{}' with url '{}' "
+                         "passed in params were: {}"
+                         .format(api_spec.name, api_spec.value.url, params))

@@ -2,7 +2,7 @@ import base64
 import requests
 import instance
 import datetime
-
+import json
 from chplpatron.exceptions import (RemoteApiError,
                                    RegisteredEmailError,
                                    TokenError)
@@ -129,6 +129,69 @@ def lookup_by_email(email_value=None):
                                 headers=headers)
         return response.json()
     return {}
+
+
+def lookup_by_name(name=None):
+    """
+    Lookup a Patron by their email address
+
+    :param name: the patron name to lookup
+    :return: dict: patron information
+    """
+
+    if not name:
+        return {}
+
+    headers = get_headers()
+
+    url = URLS.find(["n", name, PatronFlds.list_all()])
+    result = requests.get(url, headers=headers)
+    if result.status_code != 200:
+        raise RemoteApiError(url, result)
+    return result.json()
+
+
+def set_barcode(barcode, patron_id):
+    """
+    sets the barcode for the specified patron
+    :param barcode:
+    :param patron_id:
+    :return: True if successful
+    :raises: RemoteApiError on fail
+    """
+
+    data = {"barcodes": [str(barcode)]}
+    url = URLS.patron_update(patron_id)
+    result = requests.put(url,
+                          headers=get_headers(),
+                          json=data)
+    if result.status_code != 204:
+        raise RemoteApiError(url, result)
+    return True
+
+
+def set_email(email, patron_id):
+    """
+    sets the email for the specified patron
+    :param email:
+    :param patron_id:
+    :return: True if successful
+    :raises: RemoteApiError on fail
+    """
+
+    data = {"emails": [email]}
+    # data = {
+    #     "varFields": [{"fieldTag": "z",
+    #                    "content": email}]
+    #         }
+    data = json.dumps(data)
+    url = URLS.patron_update(patron_id)
+    result = requests.put(url,
+                          headers=get_headers(),
+                          data=data)
+    if result.status_code != 204:
+        raise RemoteApiError(url, result)
+    return True
 
 
 def check_email(email_value=None):

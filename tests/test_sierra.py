@@ -52,5 +52,27 @@ class Test_check_email(unittest.TestCase):
         pass
 
 
+class Test_find_by_name(unittest.TestCase):
+
+    def setUp(self):
+        pass
+
+    def test_email(self):
+        pprint.pprint(sierra.lookup_by_name("Ztestb, Jane"))
+
+    def tearDown(self):
+        pass
+
+
+class Test_setters(unittest.TestCase):
+
+    def setUp(self):
+        pass
+
+    def test_put_data(self):
+        print(sierra.set_email(354053, "stabilemichael@hotmail.com"))
+        pass
+
+
 if __name__ == '__main__':
     unittest.main()

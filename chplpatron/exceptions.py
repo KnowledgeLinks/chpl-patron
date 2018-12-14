@@ -69,3 +69,7 @@ class RegisteredEmailError(Exception):
         self.email = email
         super().__init__("Email was previously registered: {}"
                          .format(email))
+
+
+
+
