@@ -20,6 +20,13 @@ class Test_Urls(unittest.TestCase):
                                     "varFieldContent": "DOE, JOHN"}), rtn_url)
         self.assertEqual(urls.find("varFieldTag=n&"
                                    "varFieldContent=DOE%2C+JOHN"), rtn_url)
+        self.assertRaises(lookups.UrlMissingKeyId, urls.patron_update)
+        url = ("https://catalog.chapelhillpubliclibrary.org/iii/"
+               "sierra-api/v5/patrons/1234")
+        self.assertEqual(urls.patron_update("1234"), url)
+        self.assertEqual(urls.patron_update(1234), url)
+        self.assertEqual(urls.patron_update(["1234"]), url)
+        self.assertEqual(urls.patron_update({"key":"1234"}), url)
 
     def tearDown(self):
         pass
