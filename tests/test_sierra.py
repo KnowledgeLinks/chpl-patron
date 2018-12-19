@@ -57,7 +57,7 @@ class Test_find_by_name(unittest.TestCase):
     def setUp(self):
         pass
 
-    def test_email(self):
+    def test_lookup_name(self):
         pprint.pprint(sierra.lookup_by_name("Ztestb, Jane"))
 
     def tearDown(self):

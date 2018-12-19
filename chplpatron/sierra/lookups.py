@@ -4,6 +4,7 @@ associated functions and classes
 """
 
 import urllib
+import requests
 
 from enum import Enum
 
@@ -27,6 +28,7 @@ class ReqMethods(Enum):
     get = "get"
     post = "post"
     put = "put"
+    delete = "delete"
 
 
 class PatronFlds(Enum):
@@ -67,6 +69,7 @@ class PatronFlds(Enum):
         return ",".join([fld.name for fld in cls])
 
 
+
 class ApiSpec:
     """
     Specifications for an API endpoint
@@ -81,7 +84,7 @@ class ApiSpec:
     def __init__(self, url, method=methods.get, params=None):
         self.url = url
         self.params = params
-        self.method = method
+        self.method = getattr(requests, method.value)
 
 
 class ApiUrls(Enum):
@@ -91,6 +94,8 @@ class ApiUrls(Enum):
     create_patron = ApiSpec("patrons", ReqMethods.post)
     patron_update = ApiSpec("patrons/{}",
                             ReqMethods.put)
+    delete_patron = ApiSpec("patrons/{}",
+                             ReqMethods.delete)
     patron = ApiSpec("patrons",
                      ReqMethods.get,
                      params=['offset',
@@ -109,24 +114,25 @@ class ApiUrls(Enum):
     find = ApiSpec("patrons/find", params=['varFieldTag',
                                            'varFieldContent',
                                            'fields'])
-    token = ApiSpec("token")
+    token = ApiSpec("token",
+                    ReqMethods.post)
     token_info = ApiSpec("info/token")
 
 
-class Urls:
+class Apis:
     """
-    Url formatting class for specified API endpoints
+    call the specified API with supplied paramaters
 
     :param url_mode: ["production", "sandbox"] specifies which base url to use
 
     :usage:
-        url.[ApiUrls name](parameters)
+        apis.[ApiUrls name](parameters, **kwargs)
 
     :example:
-        url = Urls("production")
-        req_url = url.find(["n", "DOE, JOHN])
-        print(req_url)
-        'https://.../../patrons/find?varFieldTag=n&varFieldContent=DOE%2C+JOHN'
+        apis = Apis("production")
+        response = apis.find(params=["n", "DOE, JOHN], headers=headers)
+        print(response.text)
+            "data of a requests text attribute" 
     """
     modes = UrlMode
     base_url = modes.production
@@ -141,27 +147,49 @@ class Urls:
         except AttributeError:
             spec = getattr(self.api_specs, item)
             try:
-                return UrlFormatter(spec, self.base_url.value)
+                return ApiCaller(spec, self.base_url.value)
             except AttributeError:
-                return UrlFormatter(spec, self.base_url)
+                return ApiCaller(spec, self.base_url)
 
 
-class UrlFormatter:
+class ApiCaller:
     """
-    Formats urls with the supplied parameters
+    calls the API with the supplied parameters and data
     """
     def __init__(self, api_spec, base_url):
         self.api_spec = api_spec
         self.base_url = base_url
         self.key = False
         self.key_val = None
+        self.method = api_spec.value.method
+
         if "{}" in self.api_spec.value.url:
             self.key = True
 
-    def __call__(self, params=None, data=None):
+    def __call__(self,
+                 params=None,
+                 data=None,
+                 json=None,
+                 headers=None,
+                 **kwargs):
         self.params = params
         self.data = data
-        return self.format_url()
+        self.json = json
+        self.headers = headers
+        req_kwargs = self.mak_req_kwargs(**kwargs)
+        url = self.format_url()
+        return self.method(url, **req_kwargs)
+
+    def mak_req_kwargs(self, **kwargs):
+        if not isinstance(kwargs, dict):
+            kwargs = {}
+        if self.data:
+            kwargs['data'] = self.data
+        if self.json:
+            kwargs['json'] = self.data
+        if self.headers:
+            kwargs['headers'] = self.headers
+        return kwargs
 
     def format_url(self):
         """

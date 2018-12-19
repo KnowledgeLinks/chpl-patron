@@ -6,10 +6,10 @@ import json
 from chplpatron.exceptions import (RemoteApiError,
                                    RegisteredEmailError,
                                    TokenError)
-from .lookups import (Urls,
+from .lookups import (Apis,
                       PatronFlds)
 
-URLS = Urls("production")  # "sandbox"
+APIS = Apis("production")  # "sandbox"
 TOKEN = None
 # the time that the token expires
 TOKEN_TIME = datetime.datetime.now()
@@ -46,9 +46,8 @@ def get_token(error=False):
        "Authorization": "Basic {}".format(encoded_key.decode()), 
        "Content-Type": "application/x-www-form-urlencoded"
     }
-    response = requests.post(URLS.token(),
-                             headers=headers,
-                             data="grant_type=client_credentials")
+    response = APIS.token(headers=headers,
+                          data="grant_type=client_credentials")
     
     if response.status_code < 399:
         try:
@@ -65,7 +64,6 @@ def get_token(error=False):
             if missing_roles:
                 raise TokenError(instance.API_KEY,
                                  instance.CLIENT_SECRET,
-                                 URLS.token(),
                                  response,
                                  "Missing Roles: {}".format(missing_roles))
             return TOKEN
@@ -74,7 +72,6 @@ def get_token(error=False):
                 raise err
     raise TokenError(instance.API_KEY,
                      instance.CLIENT_SECRET,
-                     URLS.token(),
                      response)
 
 
@@ -84,14 +81,18 @@ def get_token_info():
 
     :return: dictionary of token information
     """
-    result = requests.get(URLS.token_info(), headers=get_headers())
+    result = APIS.token_info(headers=get_headers())
     return result.json()
 
 
+def delete_patron(patron_id):
+    result = APIS.delete_patron(patron_id)
+
+
 def create_patron(payload):
-    result = requests.post(URLS.create_patron(),
-                           headers=get_headers(),
-                           data=payload)
+
+    result = APIS.create_patron(headers=get_headers(),
+                                data=payload)
     return result
 
 
@@ -119,10 +120,10 @@ def lookup_by_email(email_value=None):
             "operands": [email_value]
         }
     }
-    url = URLS.query([0, 1])
-    result = requests.post(url, headers=headers, json=json_qry)
+
+    result = APIS.query(params=[0, 1], headers=headers, json=json_qry)
     if result.status_code != 200:
-        raise RemoteApiError(url, result)
+        raise RemoteApiError(result)
     for link in result.json().get('entries', []):
         response = requests.get("{0}?fields={1}".format(link['link'],
                                                         PatronFlds.list_all()),
@@ -144,10 +145,9 @@ def lookup_by_name(name=None):
 
     headers = get_headers()
 
-    url = URLS.find(["n", name, PatronFlds.list_all()])
-    result = requests.get(url, headers=headers)
+    result = APIS.find(["n", name, PatronFlds.list_all()], headers=headers)
     if result.status_code != 200:
-        raise RemoteApiError(url, result)
+        raise RemoteApiError(result)
     return result.json()
 
 
@@ -161,12 +161,11 @@ def set_barcode(barcode, patron_id):
     """
 
     data = {"barcodes": [str(barcode)]}
-    url = URLS.patron_update(patron_id)
-    result = requests.put(url,
-                          headers=get_headers(),
-                          json=data)
+    result = APIS.patron_update(patron_id,
+                                headers=get_headers(),
+                                json=data)
     if result.status_code != 204:
-        raise RemoteApiError(url, result)
+        raise RemoteApiError(result)
     return True
 
 
@@ -185,12 +184,11 @@ def set_email(email, patron_id):
     #                    "content": email}]
     #         }
     data = json.dumps(data)
-    url = URLS.patron_update(patron_id)
-    result = requests.put(url,
-                          headers=get_headers(),
-                          data=data)
+    result = APIS.patron_update(patron_id,
+                                headers=get_headers(),
+                                data=data)
     if result.status_code != 204:
-        raise RemoteApiError(url, result)
+        raise RemoteApiError(result)
     return True
 
 

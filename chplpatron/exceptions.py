@@ -41,25 +41,23 @@ class TokenError(Exception):
     def __init__(self,
                  key,
                  secret,
-                 url,
                  response,
                  message="Unable to retrieve token:"):
         self.key = key
         self.secret = secret
         self.response = response
-        self.url = url
         super().__init__("{}\n\tkey: '{}'{}"
                          .format(message,
                                  key,
-                                 RESPONSE_TEMPLATE.format(url,
+                                 RESPONSE_TEMPLATE.format(response.url,
                                                           response.status_code,
                                                           get_text(response))))
 
 
 class RemoteApiError(Exception):
-    def __init__(self, url, response):
+    def __init__(self, response):
         self.response = response
-        super().__init__(RESPONSE_TEMPLATE.format(url,
+        super().__init__(RESPONSE_TEMPLATE.format(response.url,
                                                   response.status_code,
                                                   get_text(response)))
 
