@@ -7,6 +7,6 @@ from .functions import (check_email,
                         get_token_info,
                         set_barcode,
                         set_email,
-                        URLS)
+                        APIS)
 from .lookups import (PatronFlds,
-                      Urls)
+                      Apis)

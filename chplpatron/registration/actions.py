@@ -7,7 +7,7 @@ from .utilities import (Flds,
 from chplpatron import sierra
 from chplpatron import trackingdb
 
-URLS = sierra.URLS
+URLS = sierra.APIS
 
 
 def pin_reset(temp_pin, url):
