@@ -2,12 +2,13 @@ import base64
 import requests
 import instance
 import datetime
-import json
+
 from chplpatron.exceptions import (RemoteApiError,
                                    RegisteredEmailError,
                                    TokenError)
 from .lookups import (Apis,
                       PatronFlds)
+from .patron import Patron
 
 APIS = Apis("production")  # "sandbox"
 TOKEN = None
@@ -28,12 +29,13 @@ def get_headers():
 
 def get_token(error=False):
     """
-    Retrieves a token to be used with all API request granting authorization.
-    The roles associated with the with are verified against the REQ_TOKEN_ROLES
+    Retrieves a token to be used with all API requests granting authorization.
+    The roles associated with the token are verified against the REQ_TOKEN_ROLES
     set.
 
     :param error: If true will cause a request for a new token
-    :return: the token or raises a TokenError
+    :return: the token
+    :raises TokenError: on fail
     """
 
     global TOKEN
@@ -87,13 +89,37 @@ def get_token_info():
 
 def delete_patron(patron_id):
     result = APIS.delete_patron(patron_id)
-
-
-def create_patron(payload):
-
-    result = APIS.create_patron(headers=get_headers(),
-                                data=payload)
     return result
+
+
+def create_patron(patron):
+    """
+    Creates a new patron record
+    :param patron: a Patron class instance
+    :return: response
+    """
+    result = APIS.create_patron(headers=get_headers(),
+                                json=patron.to_dict())
+    patron_id = result.json().get("link", "").split("/")[-1]
+    set_barcode(patron_id, patron_id)
+    return patron_id
+
+
+def update_patron(patron, patron_id):
+    """
+    sets the email for the specified patron
+    :param patron: a Patron class instance
+    :param patron_id:
+    :return: True if successful
+    :raises: RemoteApiError on fail
+    """
+
+    result = APIS.patron_update(patron_id,
+                                headers=get_headers(),
+                                json=patron.to_dict())
+    if result.status_code != 204:
+        raise RemoteApiError(result)
+    return True
 
 
 def lookup_by_email(email_value=None):
@@ -121,15 +147,16 @@ def lookup_by_email(email_value=None):
         }
     }
 
-    result = APIS.query(params=[0, 1], headers=headers, json=json_qry)
+    result = APIS.query(params=[0, 3], headers=headers, json=json_qry)
     if result.status_code != 200:
         raise RemoteApiError(result)
+    responses = []
     for link in result.json().get('entries', []):
-        response = requests.get("{0}?fields={1}".format(link['link'],
-                                                        PatronFlds.list_all()),
-                                headers=headers)
-        return response.json()
-    return {}
+        responses.append(requests.get("{0}?fields={1}".format(link['link'],
+                                      PatronFlds.list_all()),
+                                      headers=headers))
+    return [response.json() for response in responses]
+    # return []
 
 
 def lookup_by_name(name=None):
@@ -151,19 +178,36 @@ def lookup_by_name(name=None):
     return result.json()
 
 
+def lookup_by_id(patron_id):
+    """
+    Lookup a Patron by their patron_id
+
+    :param patron_id: the patron id
+    :return dict: patron information
+    """
+
+    headers = get_headers()
+    result = APIS.patron_get([patron_id, PatronFlds.list_all()],
+                             headers=headers)
+    if result.status_code != 200:
+        raise RemoteApiError(result)
+    return result.json()
+
+
 def set_barcode(barcode, patron_id):
     """
     sets the barcode for the specified patron
     :param barcode:
     :param patron_id:
-    :return: True if successful
-    :raises: RemoteApiError on fail
+    :return True: if successful
+    :raises RemoteApiError: on fail
     """
-
-    data = {"barcodes": [str(barcode)]}
+    patron = Patron()
+    patron.barcodes = barcode
+    # data = {"barcodes": [str(barcode)]}
     result = APIS.patron_update(patron_id,
                                 headers=get_headers(),
-                                json=data)
+                                json=patron.to_dict())
     if result.status_code != 204:
         raise RemoteApiError(result)
     return True
@@ -178,15 +222,11 @@ def set_email(email, patron_id):
     :raises: RemoteApiError on fail
     """
 
-    data = {"emails": [email]}
-    # data = {
-    #     "varFields": [{"fieldTag": "z",
-    #                    "content": email}]
-    #         }
-    data = json.dumps(data)
+    patron = Patron()
+    patron.emails = email
     result = APIS.patron_update(patron_id,
                                 headers=get_headers(),
-                                data=data)
+                                json=patron.to_dict())
     if result.status_code != 204:
         raise RemoteApiError(result)
     return True
@@ -202,9 +242,11 @@ def check_email(email_value=None):
     """
     if not email_value:
         return True
-    patron_dict = lookup_by_email(email_value)
-    emails = patron_dict.get("emails", [])
-    for email in emails:
-        if email.lower() == email_value:
-            raise RegisteredEmailError(email_value)
-    return True
+    patron_list = lookup_by_email(email_value)
+    try:
+        emails = patron_list[0].get("emails", [])
+        for email in emails:
+            if email.lower() == email_value:
+                raise RegisteredEmailError(email_value)
+    except IndexError:
+        return True

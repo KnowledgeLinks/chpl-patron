@@ -291,7 +291,7 @@ class Patron(SierraObject):
     addresses = [Address]
     phones = [Phone]
     pin = str
-    barcodes = []
+    barcodes = [str]
     patronType = int
     expirationDate = str
     birthDate = str

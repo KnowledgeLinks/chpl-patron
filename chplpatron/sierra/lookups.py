@@ -94,8 +94,11 @@ class ApiUrls(Enum):
     create_patron = ApiSpec("patrons", ReqMethods.post)
     patron_update = ApiSpec("patrons/{}",
                             ReqMethods.put)
+    patron_get = ApiSpec("patrons/{}",
+                         ReqMethods.get,
+                         params=['fields'])
     delete_patron = ApiSpec("patrons/{}",
-                             ReqMethods.delete)
+                            ReqMethods.delete)
     patron = ApiSpec("patrons",
                      ReqMethods.get,
                      params=['offset',
@@ -176,17 +179,17 @@ class ApiCaller:
         self.data = data
         self.json = json
         self.headers = headers
-        req_kwargs = self.mak_req_kwargs(**kwargs)
+        req_kwargs = self.make_req_kwargs(**kwargs)
         url = self.format_url()
         return self.method(url, **req_kwargs)
 
-    def mak_req_kwargs(self, **kwargs):
+    def make_req_kwargs(self, **kwargs):
         if not isinstance(kwargs, dict):
             kwargs = {}
         if self.data:
             kwargs['data'] = self.data
         if self.json:
-            kwargs['json'] = self.data
+            kwargs['json'] = self.json
         if self.headers:
             kwargs['headers'] = self.headers
         return kwargs

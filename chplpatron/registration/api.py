@@ -4,8 +4,6 @@ __author__ = "Jeremy Nelson, Mike Stabile"
 import os
 import sys
 
-
-
 from flask import (Flask,
                    make_response,
                    request,
@@ -19,7 +17,8 @@ import instance
 from chplpatron.registration.utilities import crossdomain, Flds
 from chplpatron.registration.validation import (validate_form,
                                                 email_check,
-                                                postal_code)
+                                                postal_code,
+                                                boundary_check)
 from chplpatron.registration.actions import register_patron
 
 
@@ -32,6 +31,24 @@ CURRENT_DIR = os.path.abspath(os.curdir)
 CROSS_DOMAIN_SITE = app.config.get('CROSS_DOMAIN_SITE',
                                    "https://chapelhillpubliclibrary.org")
 basestring = (str, bytes)
+
+
+@app.route("/boundary_check")
+@crossdomain(origin=CROSS_DOMAIN_SITE)
+def request_boundary_check(**kwargs):
+    """
+    Checks to see if the address is within the CHPL boundary
+    :param kwargs:
+    :return:
+    """
+    address = kwargs
+    if request.args.get(Flds.street.frm):
+        address = {'street': request.args.get(Flds.street.frm),
+                   'city': request.args.get(Flds.city.frm),
+                   'state': request.args.get(Flds.state.frm),
+                   'postal_code': request.args.get(Flds.postal_code.frm)}
+    rtn_msg = boundary_check(**address)
+    return jsonify(rtn_msg)
 
 
 @app.route("/email_check")
