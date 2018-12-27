@@ -70,7 +70,13 @@ class Test_setters(unittest.TestCase):
         pass
 
     def test_put_data(self):
-        print(sierra.set_email(354053, "stabilemichael@hotmail.com"))
+        # patron = sierra.Patron()
+        # patron.names = "Ztestc, Joan"
+        # patron.emails = "mstabile75@gmail.com"
+        # result = sierra.update_patron(patron, 354241)
+        # print(result)
+        # pprint.pprint(sierra.lookup_by_id(354241))
+        # sierra.set_barcode(354240, 354240)
         pass
 
 

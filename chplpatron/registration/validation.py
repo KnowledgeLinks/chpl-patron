@@ -59,7 +59,7 @@ def email_check(**kwargs):
             sierra.check_email(email_value)
         except RegisteredEmailError:
             valid = False
-            message: InvalidMsgs.email_reg.value
+            message = InvalidMsgs.email_reg.value
 
     rtn_msg = {"valid": valid, "message": message}
 
@@ -83,8 +83,8 @@ def postal_code(**kwargs):
             zipcode: the postal code to check
     """
 
-    postal_value = kwargs.get("zipcode","")
-    debug_on = kwargs.get("debug",False)
+    postal_value = kwargs.get("zipcode", "")
+    debug_on = kwargs.get("debug", False)
     valid = False
     message = "Enter all 5 digits"
     data = []
@@ -92,15 +92,25 @@ def postal_code(**kwargs):
         try:
             locations = geosearch.get_postal_code(postal_value)
             valid = True
-            data = [dict(ix.city) for ix in locations]
+            data = [ix.get('city') for ix in locations]
             message = ""
         except InvalidPostalCode:
-            message = "Enter a valid US postal code"
-    rtn_msg = {"valid":valid,
-               "message":message,
-               "data":data}
+            message = InvalidMsgs.invalid_postal_code.value
+    rtn_msg = {"valid": valid,
+               "message": message,
+               "data": data}
     if debug_on:
         rtn_msg["debug"] = {
                                "postal_code": postal_value
                            }
+    return rtn_msg
+
+
+def boundary_check(**kwargs):
+    within = geosearch.check_address(**kwargs)
+    message = ""
+    if not within:
+        message = InvalidMsgs.not_within_boundary.value
+    rtn_msg = {"valid": within,
+               "message": message}
     return rtn_msg

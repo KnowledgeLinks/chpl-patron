@@ -100,7 +100,7 @@ def check_boundary_coords(coords):
     raise RemoteApiError(url, response)
 
 
-def check_address(address):
+def check_address(**address):
     """
     Queries an address to see if it is a valid postal code and if it is within
     the boundary
