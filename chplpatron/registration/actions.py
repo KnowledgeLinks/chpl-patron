@@ -1,5 +1,6 @@
 import requests
 import smtplib
+import datetime
 
 from email.mime.text import MIMEText
 from .utilities import (Flds,
@@ -25,15 +26,22 @@ def pin_reset(temp_pin, url):
     return True
 
 
-def register_patron(form, location):
+def register_patron(form, location, boundary):
     """
     send the patron data to sierra and adds a hash of the registered email
     to the local sqlite db
     :param form: the form data
     :param location: 'internal' or 'external' registration source
+    :param boundary: True or False whether address is within boundary
     :return: the temp_card_number or None if not successful
     """
     patron = form_to_api(form)
+    var_field = sierra.VarField()
+    var_field.fieldTag = "x"
+    var_field.content = boundary['message']
+    patron.varFields = var_field
+    patron.expirationDate = (datetime.datetime.now() + datetime.timedelta(30))\
+        .strftime("%Y-%m-%d")
     result = sierra.create_patron(patron)
 
     if result:
@@ -41,7 +49,8 @@ def register_patron(form, location):
         if temp_card_number is not None:
             trackingdb.add_registration(temp_card_number,
                                         form.get(Flds.email.frm),
-                                        location)
+                                        location,
+                                        boundary['valid'])
             # if not pin_reset(temp_card_number):
             #     return "Failed to reset {}".format(temp_card_number)
             return temp_card_number
