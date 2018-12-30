@@ -5,7 +5,6 @@ __author__ = "Jeremy Nelson, Mike Stabile"
 
 import os
 import sqlite3
-import pprint
 
 from hashlib import sha512
 
@@ -14,7 +13,7 @@ from chplpatron.exceptions import RegisteredEmailError
 DB_NAME = "tracking-db.sqlite"
 TRACKING_DB_SETUP = None
 CURRENT_DIR = os.path.dirname(__file__)
-DB_PATH = None
+DB_PATH = ""
 REG_TBL = "LibraryCardRequest"
 
 
@@ -28,7 +27,7 @@ def setup(func):
     global DB_PATH
     if TRACKING_DB_SETUP:
         return func
-    DB_PATH = os.path.join(CURRENT_DIR, DB_NAME)
+    DB_PATH = str(os.path.join(CURRENT_DIR, DB_NAME))
     con = sqlite3.connect(DB_PATH)
     cur = con.cursor()
 
@@ -40,7 +39,8 @@ def setup(func):
                 "date_retrieved DATETIME,"
                 "patron_id VARCHAR NOT NULL UNIQUE,"
                 "email VARCHAR NOT NULL UNIQUE,"
-                "location VARCHAR NOT NULL DEFAULT 'unknown'"
+                "location VARCHAR NOT NULL DEFAULT 'unknown',"
+                "boundary INTEGER NOT NULL DEFAULT -1"
                 ");".format(REG_TBL))
     con.commit()
     cur.close()
@@ -60,19 +60,27 @@ def hash_email(email):
 
 
 @setup
-def add_registration(patron_id, email, location="unknown"):
-    """ Checks to see if the email address as has already been registered
-        request args:
-            g587-email: the email address to check
+def add_registration(patron_id, email, location="unknown", boundary=-1):
+    """
+    Adds a registration to the database
+
+    :param patron_id: the id from sierra
+    :param email: email addreess
+    :param location: internal for in-house reg and external for non
+    :param boundary: -1 = unknown, 1 = within, 0 = not within
+    :return:
     """
     con = sqlite3.connect(DB_PATH)
     cur = con.cursor()
     qry = ("INSERT INTO {} "
-           "(email, patron_id, location) " 
-           "VALUES (?,?,?);").format(REG_TBL)
+           "(email, patron_id, location, boundary) " 
+           "VALUES (?,?,?,?);").format(REG_TBL)
 
     try:
-        cur.execute(qry, (hash_email(email), patron_id, location,))
+        cur.execute(qry, (hash_email(email),
+                          patron_id,
+                          location,
+                          int(boundary),))
         con.commit()
     except sqlite3.IntegrityError:
         cur.close()
