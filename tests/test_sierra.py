@@ -23,19 +23,15 @@ class Test_register(unittest.TestCase):
         pass
 
     def test_register_empty_payload(self):
-        result = sierra.create_patron({})
-        self.assertEqual(result.status_code,
-                         400)
-        self.assertEqual(result.json().get('code'),
-                         130)
-        self.assertEqual(result.json().get('name'),
-                         'Bad JSON/XML Syntax')
+
+        result = sierra.create_patron(sierra.Patron())
+        self.assertEqual(result, "")
 
     def tearDown(self):
         pass
 
 
-class Test_check_email(unittest.TestCase):
+class TestCheckEmail(unittest.TestCase):
 
     def setUp(self):
         pass
@@ -52,19 +48,21 @@ class Test_check_email(unittest.TestCase):
         pass
 
 
-class Test_find_by_name(unittest.TestCase):
+class TestFindByName(unittest.TestCase):
 
     def setUp(self):
         pass
 
     def test_lookup_name(self):
-        pprint.pprint(sierra.lookup_by_name("Ztestb, Jane"))
+        result = sierra.lookup_by_name("Ztesta, Jane")
+        # sierra.set_email("m@m.com", result['id'])
+        pprint.pprint(result)
 
     def tearDown(self):
         pass
 
 
-class Test_setters(unittest.TestCase):
+class TestSetters(unittest.TestCase):
 
     def setUp(self):
         pass
