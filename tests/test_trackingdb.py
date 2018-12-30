@@ -35,6 +35,10 @@ class Test_TrackingDb(unittest.TestCase):
         self.assertIsNotNone(trackingdb.lookup_card_number(10))
         self.assertIsNone(trackingdb.lookup_card_number(12))
 
+    # def test_load_old_data(self):
+    #     trackingdb.trackingdb.load_old_data("/home/stabiledev/git/"
+    #                                         "chpl-patron/card-requests.sqlite")
+
     def tearDown(self):
         # deletes the test database
         os.remove(trackingdb.trackingdb.DB_PATH)

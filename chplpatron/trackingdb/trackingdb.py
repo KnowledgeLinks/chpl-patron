@@ -5,6 +5,7 @@ __author__ = "Jeremy Nelson, Mike Stabile"
 
 import os
 import sqlite3
+import pprint
 
 from hashlib import sha512
 
@@ -37,8 +38,9 @@ def setup(func):
                 "id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,"
                 "date DATETIME DEFAULT CURRENT_TIMESTAMP," 
                 "date_retrieved DATETIME,"
-                "card_number INTEGER,"
-                "email VARCHAR NOT NULL UNIQUE"
+                "patron_id VARCHAR NOT NULL UNIQUE,"
+                "email VARCHAR NOT NULL UNIQUE,"
+                "location VARCHAR NOT NULL DEFAULT 'unknown'"
                 ");".format(REG_TBL))
     con.commit()
     cur.close()
@@ -58,7 +60,7 @@ def hash_email(email):
 
 
 @setup
-def add_registration(card_number, email):
+def add_registration(patron_id, email, location="unknown"):
     """ Checks to see if the email address as has already been registered
         request args:
             g587-email: the email address to check
@@ -66,11 +68,11 @@ def add_registration(card_number, email):
     con = sqlite3.connect(DB_PATH)
     cur = con.cursor()
     qry = ("INSERT INTO {} "
-           "(email, card_number) " 
-           "VALUES (?,?);").format(REG_TBL)
+           "(email, patron_id, location) " 
+           "VALUES (?,?,?);").format(REG_TBL)
 
     try:
-        cur.execute(qry, (hash_email(email), card_number,))
+        cur.execute(qry, (hash_email(email), patron_id, location,))
         con.commit()
     except sqlite3.IntegrityError:
         cur.close()
@@ -124,7 +126,7 @@ def lookup_card_number(card_number):
     cur = con.cursor()
     cur.execute("SELECT * "
                 "FROM {tbl} "
-                "WHERE card_number=?".format(tbl=REG_TBL),
+                "WHERE patron_id=?".format(tbl=REG_TBL),
                 (card_number,))
     data = cur.fetchone()
     cur.close()
@@ -150,6 +152,75 @@ def print_table(table):
         print(row)
     cur.close()
     con.close()
+
+
+def load_old_data(old_db_path):
+    """
+    loads data from old database into new database
+    :param old_db_path: file path to database
+    :return:
+    """
+    old_con = sqlite3.connect(old_db_path)
+    con = sqlite3.connect(DB_PATH)
+    old_cur = old_con.cursor()
+    old_cur.execute("SELECT * FROM LibraryCardRequest;")
+    old_data = old_cur.fetchall()
+    old_data = [tuple(i for i in item[1:]) for item in old_data]
+    # pprint.pprint(old_data[:10])
+    qry = ("INSERT INTO {} "
+           "(date, date_retrieved, patron_id, email) "
+           "VALUES (?,?,?,?);").format(REG_TBL)
+    cur = con.cursor()
+    cur.executemany(qry, old_data)
+    con.commit()
+    cur.close()
+    con.close()
+
+
+def columns():
+    """
+    list column names
+    :return list: of column names
+    """
+    con = sqlite3.connect(DB_PATH)
+    cur = con.cursor()
+    cur.execute("SELECT * "
+                "FROM {tbl} "
+                "LIMIT 1".format(tbl=REG_TBL))
+    names = [description[0] for description in cur.description]
+    cur.close()
+    con.close()
+    return names
+
+
+def get_data():
+    """
+    list column names
+    :return list: of column names
+    """
+    con = sqlite3.connect(DB_PATH)
+    cur = con.cursor()
+    cur.execute("SELECT * "
+                "FROM {tbl} ".format(tbl=REG_TBL))
+    data = cur.fetchall()
+    cur.close()
+    con.close()
+    return data
+
+
+def registration_by_month():
+    """
+    :return: a list of number of registrations for month and year
+    """
+    con = sqlite3.connect(DB_PATH)
+    cur = con.cursor()
+    cur.execute("SELECT time, count(time) "
+                "FROM (SELECT strftime('%Y-%m', date) as time "
+                "FROM {tbl}) GROUP BY time;".format(tbl=REG_TBL))
+    data = cur.fetchall()
+    cur.close()
+    con.close()
+    return data
 
 
 if __name__ == '__main__':
