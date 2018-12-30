@@ -3,6 +3,7 @@ __author__ = "Jeremy Nelson, Mike Stabile"
 
 import os
 import sys
+import pprint
 
 from flask import (Flask,
                    request,
@@ -20,9 +21,17 @@ from chplpatron.registration.validation import (validate_form,
 from chplpatron.registration.actions import register_patron
 from chplpatron import trackingdb
 
-app = Flask(__name__, instance_relative_config=True)
+from instance import config
+
+app = Flask(__name__)
 app.config.from_mapping()
+app.config.from_object(config)
+
 app.config.INTERNAL_IP = "198.85.222.29"
+
+print("##### CONFIGURATION VALUES ###################")
+pprint.pprint(app.config)
+print("##############################################")
 
 CURRENT_DIR = os.path.abspath(os.curdir)
 
