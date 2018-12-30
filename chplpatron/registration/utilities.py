@@ -3,14 +3,19 @@ Utility Methods and wrappers for registration app
 """
 __author__ = "Jeremy Nelson, Mike Stabile"
 
-import pdb
-
-from enum import Enum
-from flask import make_response, request, current_app
 from datetime import timedelta
 from functools import update_wrapper
-from chplpatron.sierra import PatronFlds
 
+from flask import (make_response,
+                   request,
+                   current_app)
+
+from chplpatron.sierra import PatronFlds
+from chplpatron.sierra import (Patron,
+                               Address,
+                               Phone)
+
+from instance import config
 basestring = (str, bytes)
 
 
@@ -119,7 +124,9 @@ class Flds():
     email = FldSpec("emails",
                     "g587-email",
                     PatronFlds.emails.name)
-
+    password = FldSpec("password",
+                       "g587-password",
+                       "pin")
 # def convert(data, input, output):
 #     if input == "form":
 #         return form_convert(data, output)
@@ -132,18 +139,30 @@ class Flds():
 
 
 def form_to_api(form):
-    return {
-        "names": ["{0}, {1}".format(form.get(Flds.last_name.frm),
-                                    form.get(Flds.first_name.frm))],
-        Flds.birthday.api: form.get(Flds.birthday.frm),
-        PatronFlds.addresses.name: [", ".join(
-                [form.get(getattr(Flds, fld).frm)
-                 for fld in ADDRESS_CONCAT['fields']])],
-        PatronFlds.phones.name: [form.get(Flds.phone.frm)]
-            }
+    patron = Patron()
+    patron.names = "{0}, {1}".format(form.get(Flds.last_name.frm),
+                                     form.get(Flds.first_name.frm))
+    patron.birthDate = form.get(Flds.birthday.frm)
+    address = Address()
+    address.type = "a"
+    address.lines = [form.get(Flds.street.frm),
+                     "{city}, {state} {postal_code}"
+                         .format(city=form.get(Flds.city.frm),
+                                 state=form.get(Flds.state.frm),
+                                 postal_code=form.get(Flds.postal_code.frm))]
+    patron.addresses = address
+    phone = Phone()
+    phone.type = "t"
+    phone.number = form.get(Flds.phone.frm)
+    patron.phones = phone
+    patron.pin = form.get(Flds.password.frm)
+    patron.patronType = config.DEFAULT_PATRON_TYPE
+    return patron
+
 
 def api_to_db(data):
     pass
+
 
 def db_convert(data, output):
     pass

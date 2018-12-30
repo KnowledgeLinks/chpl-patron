@@ -4,7 +4,7 @@ from chplpatron import geosearch
 from chplpatron.exceptions import *
 
 
-class Test_GeoSearch(unittest.TestCase):
+class TestGeoSearch(unittest.TestCase):
 
     def setUp(self):
         self.valid_address = {'street': '100 Library Drive',
@@ -47,8 +47,8 @@ class Test_GeoSearch(unittest.TestCase):
         valid = self.valid_address.copy()
         del valid['x']
         del valid['y']
-        self.assertTrue(geosearch.check_address(valid))
-        self.assertFalse(geosearch.check_address(self.out_boundary_address))
+        self.assertTrue(geosearch.check_address(**valid))
+        self.assertFalse(geosearch.check_address(**self.out_boundary_address))
 
     def tearDown(self):
         pass

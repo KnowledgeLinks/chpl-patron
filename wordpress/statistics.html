@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Registration Statistics</title>
+</head>
+<body>
+<h1>Registration Statistics</h1>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.3.1.min.js"
+        integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+        crossorigin="anonymous"></script>
+    <div id="container" style="width: 75%;">
+        <canvas id="onlineRegStats"></canvas>
+    </div>
+<script>
+$(document).ready(function() {
+    $.get("http://localhost:4000/statistics/reg_by_month", function(data) {
+        labels = formatLabels(data.labels);
+        makeChart(labels, data.values);
+    });
+});
+
+var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+function formatLabels(data) {
+    var currentYear = 0;
+    var rtn = []
+    for (var i=0; i<data.length; i++) {
+        var parts = data[i].split("-");
+        if (currentYear == 0 || parts[0] != currentYear) {
+            currentYear = parts[0];
+            rtn.push([MONTHS[parseInt(parts[1])-1], currentYear]);
+        } else {
+            rtn.push(MONTHS[parseInt(parts[1])-1]);
+        }
+    }
+    return rtn;
+
+}
+
+var color = Chart.helpers.color;
+var ctx = document.getElementById("onlineRegStats").getContext('2d');
+function makeChart(labels, values) {
+    var myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+
+            labels: labels,
+            datasets: [{
+                label: '# of Online Reg',
+                data: values,
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                borderColor: 'rgba(255, 99, 132, 0.2)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        beginAtZero:true
+                    }
+                }]
+            }
+        }
+    });
+}
+</script>
+</body>
+</html>

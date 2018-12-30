@@ -3,4 +3,7 @@ from .trackingdb import (add_registration,
                          lookup_email,
                          check_email,
                          print_table,
-                         hash_email)
+                         hash_email,
+                         columns,
+                         get_data,
+                         registration_by_month)

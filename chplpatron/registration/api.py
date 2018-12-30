@@ -5,22 +5,20 @@ import os
 import sys
 
 from flask import (Flask,
-                   make_response,
                    request,
-                   current_app,
                    jsonify)
 
 print(os.path.abspath("../../"))
 sys.path.append(os.path.abspath("../../"))
-import instance
 
 from chplpatron.registration.utilities import crossdomain, Flds
 from chplpatron.registration.validation import (validate_form,
                                                 email_check,
                                                 postal_code,
-                                                boundary_check)
+                                                boundary_check,
+                                                validate_password)
 from chplpatron.registration.actions import register_patron
-
+from chplpatron import trackingdb
 
 app = Flask(__name__, instance_relative_config=True)
 app.config.from_mapping()
@@ -87,7 +85,13 @@ def index():
     form = request.form.to_dict()
     valid_form = validate_form(form)
     if valid_form['valid']:
-        temp_card_number = register_patron(valid_form['form'])
+        temp_card_number = register_patron(valid_form['form'],
+                                           "internal"
+                                           if request
+                                           .remote_addr
+                                           .startswith(app.config
+                                                       .get("INTERNAL_IP")) else
+                                           "external")
         if temp_card_number is not None:
             if request.remote_addr.startswith(app.config.get("INTERNAL_IP")):
                 success_uri = app.config.get("INTERNAL_SUCCESS")
@@ -107,6 +111,7 @@ def index():
 
 
 @app.route("/test_form", methods=['GET', 'POST'])
+@crossdomain(origin=CROSS_DOMAIN_SITE)
 def test_form():
     form_path = os.path.join(os.path.abspath("../../"),
                              "wordpress",
@@ -115,6 +120,49 @@ def test_form():
     with open(form_path, "r") as form_file:
         html = form_file.read()
     return html.replace("104.131.189.93", "localhost")
+
+
+@app.route("/statistics", methods=['GET', 'POST'])
+@crossdomain(origin=CROSS_DOMAIN_SITE)
+def statistics():
+    form_path = os.path.join(os.path.abspath("../../"),
+                             "wordpress",
+                             "statistics.html")
+    html = ""
+    with open(form_path, "r") as form_file:
+        html = form_file.read()
+    return html.replace("104.131.189.93", "localhost")
+
+
+@app.route("/database", methods=['GET'])
+@crossdomain(origin=CROSS_DOMAIN_SITE)
+def database_data():
+    template = ("<html>"
+                "<body>"
+                "<h1>Database data</h1>"
+                "<table>"
+                "<tr>{header_row}</tr>"
+                "{data_rows}"
+                "</table>"
+                "</body>"
+                "</html>")
+    # trackingdb.trackingdb.load_old_d
+
+    header_row = "".join(["<th>{}</th>".format(item)
+                          for item in trackingdb.columns()])
+    data_rows = "\n".join(["<tr><td>{}</td></tr>".format("</td><td>".join([str(i) for i in item]))
+                           for item in trackingdb.get_data()])
+    return template.format(header_row=header_row,
+                           data_rows=data_rows)
+
+
+@app.route("/statistics/reg_by_month")
+@crossdomain(origin=CROSS_DOMAIN_SITE)
+def reg_by_month():
+    data = trackingdb.registration_by_month()
+    data = {"labels": [item[0] for item in data],
+            "values": [item[1] for item in data]}
+    return jsonify(data)
 
 
 if __name__ == '__main__':
