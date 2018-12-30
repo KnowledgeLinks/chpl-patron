@@ -59,7 +59,21 @@ def request_email_check(**kwargs):
     """
     rtn_msg = email_check(email=request.args.get(Flds.email.frm, "").lower(),
                           debug=request.args.get("debug", False))
-    return jsonify(rtn_msg)
+    if rtn_msg['valid']:
+        return jsonify(True)
+    return jsonify(rtn_msg['message'])
+
+
+@app.route("/validate_password")
+@crossdomain(origin=CROSS_DOMAIN_SITE)
+def request_validate_password(**kwargs):
+    """
+    gets the associated cities for the specified postal code
+    """
+    rtn_msg = validate_password(request.args.get(Flds.password.frm, ""))
+    if rtn_msg['valid']:
+        return jsonify(True)
+    return jsonify(rtn_msg['message'])
 
 
 @app.route("/postal_code")
@@ -150,7 +164,8 @@ def database_data():
 
     header_row = "".join(["<th>{}</th>".format(item)
                           for item in trackingdb.columns()])
-    data_rows = "\n".join(["<tr><td>{}</td></tr>".format("</td><td>".join([str(i) for i in item]))
+    data_rows = "\n".join(["<tr><td>{}</td></tr>"
+                           .format("</td><td>".join([str(i) for i in item]))
                            for item in trackingdb.get_data()])
     return template.format(header_row=header_row,
                            data_rows=data_rows)

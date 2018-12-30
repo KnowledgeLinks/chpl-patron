@@ -67,11 +67,11 @@ def email_check(**kwargs):
         except RegisteredEmailError:
             valid = False
             message = InvalidMsgs.email_reg.value
-    if valid:
-        rtn_msg = True
-    else:
-        rtn_msg = message
-    # rtn_msg = {"valid": valid, "message": message}
+    # if valid:
+    #     rtn_msg = True
+    # else:
+    #     rtn_msg = message
+    rtn_msg = {"valid": valid, "message": message}
 
     if debug_on:
         try:
