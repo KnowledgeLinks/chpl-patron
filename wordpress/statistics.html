@@ -5,24 +5,52 @@
     <title>Registration Statistics</title>
 </head>
 <body>
-<h1>Registration Statistics</h1>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.bundle.min.js"></script>
+<h1 align="center" class="h-custom-headline h1">Registration Statistics</h1>
+<h3 align="center" class="h-custom-headline h3">Number of Online Registrations</h3>
+<canvas id="onlineRegStats"></canvas>
+
 <script src="https://code.jquery.com/jquery-3.3.1.min.js"
         integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
         crossorigin="anonymous"></script>
-    <div id="container" style="width: 75%;">
-        <canvas id="onlineRegStats"></canvas>
-    </div>
 <script>
-$(document).ready(function() {
-    $.get("http://localhost:4000/statistics/reg_by_month", function(data) {
-        labels = formatLabels(data.labels);
-        makeChart(labels, data.values);
+var baseUrl = "http://chapelhillpubliclibrary.org:3500";
+
+function loadScript(url, callback)
+{
+    // Adding the script tag to the head as suggested before
+    var head = document.getElementsByTagName('head')[0];
+    var script = document.createElement('script');
+    script.type = 'text/javascript';
+    script.src = url;
+
+    // Then bind the event to the callback function.
+    // There are several events for cross browser compatibility.
+    script.onreadystatechange = callback;
+    script.onload = callback;
+    script.id = "chartLoad";
+
+    // Fire the loading
+  	head.appendChild(script);
+}
+
+var color = "";
+var ctx = "";
+function loadChart() {
+
+    jQuery(document).ready(function() {
+        jQuery.get(baseUrl + "/statistics/reg_by_month", function(data) {
+            //labels = formatLabels(data.labels);
+            makeChart(data);
+        });
     });
-});
+}
 
 var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+// var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 function formatLabels(data) {
+    /* Not Using at this time.
+      This formats the labels consecutively adding the year to the first month of each new year
+    */
     var currentYear = 0;
     var rtn = []
     for (var i=0; i<data.length; i++) {
@@ -35,24 +63,62 @@ function formatLabels(data) {
         }
     }
     return rtn;
-
 }
 
-var color = Chart.helpers.color;
-var ctx = document.getElementById("onlineRegStats").getContext('2d');
-function makeChart(labels, values) {
+var colorList = [
+		'rgba(6, 128, 182, 0.8)',
+		'rgba(130, 182, 146, 0.8)',
+		'rgba(229, 87, 84, 0.8)',
+		'rgba(155, 155, 155, 0.8)',
+		'orange',
+		'purple',
+		'yellow',
+		'brown'
+]
+var baseData = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+
+function makeDataSet(dataIter, dataYear) {
+  return {
+    label: dataYear,
+    data: baseData.slice(),
+    backgroundColor: colorList[dataIter],
+    borderColor: colorList[dataIter],
+    borderWidth: 1
+	}
+}
+
+function makeDataSets(data) {
+  	var currentYear = 0;
+  	var currentDataIter = 0;
+    var rtn = []
+
+  	var currentDataset = {};
+  	dataDates = data.labels
+    for (var i=0; i<data.labels.length; i++) {
+        var parts = data.labels[i].split("-");
+        if (currentYear == 0 || parts[0] != currentYear) {
+            currentYear = parts[0];
+          	currentDataset = makeDataSet(currentDataIter, currentYear);
+          	currentDataIter += 1;
+          	currentDataset.data[parseInt(parts[1])-1] = data.values[i];
+          	rtn.push(currentDataset);
+        } else {
+            currentDataset.data[parseInt(parts[1])-1] = data.values[i];
+        }
+    }
+  	return rtn;
+}
+
+
+function makeChart(data) {
+  	//color = Chart.helpers.color;
+		ctx = document.getElementById("onlineRegStats").getContext('2d');
     var myChart = new Chart(ctx, {
         type: 'bar',
         data: {
 
-            labels: labels,
-            datasets: [{
-                label: '# of Online Reg',
-                data: values,
-                backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                borderColor: 'rgba(255, 99, 132, 0.2)',
-                borderWidth: 1
-            }]
+            labels: MONTHS,
+            datasets: makeDataSets(data)
         },
         options: {
             scales: {
@@ -65,6 +131,7 @@ function makeChart(labels, values) {
         }
     });
 }
+loadScript("https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.bundle.min.js", loadChart);
 </script>
 </body>
 </html>
