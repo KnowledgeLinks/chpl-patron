@@ -68,7 +68,7 @@ class TestFindById(unittest.TestCase):
         pass
 
     def test_lookup_id(self):
-        result = sierra.lookup_by_id(352695)
+        result = sierra.lookup_by_id(354316)
 
         pprint.pprint(result)
 
