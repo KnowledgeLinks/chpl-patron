@@ -40,6 +40,10 @@ def validate_form(form):
     if not val_password['valid']:
         val_password['field'] = Flds.password.frm
         errors.append(val_password)
+    val_email = email_check(email=form.get(Flds.email.frm))
+    if not val_email['valid']:
+        val_email['field'] = Flds.email.frm
+        errors.append(val_email)
     if len(errors) > 0:
         valid = False
     return {"valid": valid, "errors": errors, "form": form}

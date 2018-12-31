@@ -27,7 +27,7 @@ app = Flask(__name__)
 app.config.from_mapping()
 app.config.from_object(config)
 
-app.config.INTERNAL_IP = "198.85.222.29"
+# app.config.INTERNAL_IP = "198.85.222.29"
 
 print("##### CONFIGURATION VALUES ###################")
 pprint.pprint(app.config)
@@ -35,7 +35,9 @@ print("##############################################")
 
 CURRENT_DIR = os.path.abspath(os.curdir)
 
-CROSS_DOMAIN_SITE = "https://chapelhillpubliclibrary.org" if not hasattr(app.config, 'CROSS_DOMAIN_SITE') else app.config.CROSS_DOMAIN_SITE
+CROSS_DOMAIN_SITE = "https://chapelhillpubliclibrary.org" \
+                    if not hasattr(config, 'CROSS_DOMAIN_SITE') \
+                    else config.CROSS_DOMAIN_SITE
 
 basestring = (str, bytes)
 
@@ -54,8 +56,6 @@ def request_boundary_check(**kwargs):
                'city': lookup.get(Flds.city.frm),
                'state': lookup.get(Flds.state.frm),
                'postal_code': lookup.get(Flds.postal_code.frm)}
-    pprint.pprint(lookup)
-    pprint.pprint(address)
     rtn_msg = boundary_check(**address)
     return rtn_msg if kwargs else jsonify(rtn_msg)
 
@@ -108,48 +108,37 @@ def index():
     if not request.method.startswith("POST"):
         return "Method not supported"
     form = request.form.to_dict()
-    pprint.pprint(form)
     valid_form = validate_form(form)
     if valid_form['valid']:
-        print("111111111111111111111111111")
         lookup = form
         address = {'street': lookup.get(Flds.street.frm),
-               'city': lookup.get(Flds.city.frm),
-               'state': lookup.get(Flds.state.frm),
-               'postal_code': lookup.get(Flds.postal_code.frm)}
+                   'city': lookup.get(Flds.city.frm),
+                   'state': lookup.get(Flds.state.frm),
+                   'postal_code': lookup.get(Flds.postal_code.frm)}
 
         boundary = boundary_check(**address)
-        print(boundary)
-        print(request.remote_addr)
-        print(app.config.INTERNAL_IP)
         temp_card_number = register_patron(valid_form['form'],
                                            "internal"
                                            if request.remote_addr
                                            and request
                                            .remote_addr
-                                           .startswith(app.config.INTERNAL_IP) else
+                                           .startswith(config.INTERNAL_IP) else
                                            "external",
                                            boundary)
         if temp_card_number is not None:
-            if request.remote_addr.startswith(app.config.INTERNAL_IP):
-                success_uri = app.config.INTERNAL_SUCCESS
+            if request.remote_addr.startswith(config.INTERNAL_IP):
+                success_uri = config.INTERNAL_SUCCESS
             else:
-                success_uri = app.config.SUCCESS_URI
-            pprint.pprint({"valid": True,
-                            "url": "{}?number={}&boundary{}".format(
-                                  success_uri,
-                                  temp_card_number,
-                                  boundary['valid'])})
+                success_uri = config.SUCCESS_URI
             return jsonify({"valid": True,
-                            "url": "{}?number={}&boundary{}".format(
+                            "url": "{}?number={}&boundary={}".format(
                                   success_uri,
                                   temp_card_number,
                                   boundary['valid'])})
         else:
-            print("ERRORRRRRRRRRRRRRRRRRRRRRRRRRRRRRR")
             return jsonify({"valid": True,
                             "url": "{}?error={}".format(
-                                    app.config.ERROR_URI,
+                                    config.ERROR_URI,
                                     "Failed to register Patron")})
     else:
         return jsonify(valid_form)

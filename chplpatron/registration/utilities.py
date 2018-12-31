@@ -9,6 +9,7 @@ from functools import update_wrapper
 from flask import (make_response,
                    request,
                    current_app)
+from dateutil.parser import parse as date_parse
 
 from chplpatron.sierra import PatronFlds
 from chplpatron.sierra import (Patron,
@@ -92,7 +93,7 @@ NAMES_CONCAT = {"separator": ", ",
                 "fields": ["last_name", "first_name"]}
 
 
-class Flds():
+class Flds:
     first_name = FldSpec("first_name",
                          "g587-firstname",
                          PatronFlds.names,
@@ -142,7 +143,8 @@ def form_to_api(form):
     patron = Patron()
     patron.names = "{0}, {1}".format(form.get(Flds.last_name.frm),
                                      form.get(Flds.first_name.frm))
-    patron.birthDate = form.get(Flds.birthday.frm)
+    patron.birthDate = date_parse(form.get(Flds.birthday.frm))\
+        .strftime("%Y-%m-%d")
     address = Address()
     address.type = "a"
     address.lines = [form.get(Flds.street.frm),
@@ -157,6 +159,7 @@ def form_to_api(form):
     patron.phones = phone
     patron.pin = form.get(Flds.password.frm)
     patron.patronType = config.DEFAULT_PATRON_TYPE
+    patron.emails = form.get(Flds.email.frm)
     return patron
 
 
