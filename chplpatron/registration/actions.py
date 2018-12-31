@@ -42,6 +42,7 @@ def register_patron(form, location, boundary):
     patron.varFields = var_field
     patron.expirationDate = (datetime.datetime.now() + datetime.timedelta(30))\
         .strftime("%Y-%m-%d")
+    patron.pMessage = 'f'
     result = sierra.create_patron(patron)
 
     if result:

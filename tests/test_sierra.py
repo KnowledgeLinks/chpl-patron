@@ -62,6 +62,20 @@ class TestFindByName(unittest.TestCase):
         pass
 
 
+class TestFindById(unittest.TestCase):
+
+    def setUp(self):
+        pass
+
+    def test_lookup_id(self):
+        result = sierra.lookup_by_id(352695)
+
+        pprint.pprint(result)
+
+    def tearDown(self):
+        pass
+
+
 class TestSetters(unittest.TestCase):
 
     def setUp(self):
