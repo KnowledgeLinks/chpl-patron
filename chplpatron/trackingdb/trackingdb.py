@@ -83,9 +83,10 @@ def add_registration(patron_id, email, location="unknown", boundary=-1):
                           int(boundary),))
         con.commit()
     except sqlite3.IntegrityError:
-        cur.close()
-        con.close()
-        raise RegisteredEmailError(email)
+        pass
+        # cur.close()
+        # con.close()
+        # raise RegisteredEmailError(email)
     cur.close()
     con.close()
     return True
@@ -232,4 +233,4 @@ def registration_by_month():
 
 
 if __name__ == '__main__':
-    print("Main method not implemented")
+    print_table(REG_TBL)

@@ -54,7 +54,7 @@ class TestFindByName(unittest.TestCase):
         pass
 
     def test_lookup_name(self):
-        result = sierra.lookup_by_name("Ztesta, Jane")
+        result = sierra.lookup_by_name("Ztestd, Jess")
         # sierra.set_email("m@m.com", result['id'])
         pprint.pprint(result)
 
