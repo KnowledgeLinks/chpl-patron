@@ -144,51 +144,51 @@ def index():
         return jsonify(valid_form)
 
 
-@app.route("/test_form", methods=['GET', 'POST'])
-@crossdomain(origin=CROSS_DOMAIN_SITE)
-def test_form():
-    form_path = os.path.join(os.path.abspath("../../"),
-                             "wordpress",
-                             "currentform.txt")
-    # html = ""
-    with open(form_path, "r") as form_file:
-        html = form_file.read()
-    return html.replace("104.131.189.93", "localhost")
-
-
-@app.route("/statistics", methods=['GET', 'POST'])
-@crossdomain(origin=CROSS_DOMAIN_SITE)
-def statistics():
-    form_path = os.path.join(os.path.abspath("../../"),
-                             "wordpress",
-                             "statistics.html")
-    # html = ""
-    with open(form_path, "r") as form_file:
-        html = form_file.read()
-    return html.replace("104.131.189.93", "localhost")
-
-
-@app.route("/database", methods=['GET'])
-@crossdomain(origin=CROSS_DOMAIN_SITE)
-def database_data():
-    template = ("<html>"
-                "<body>"
-                "<h1>Database data</h1>"
-                "<table>"
-                "<tr>{header_row}</tr>"
-                "{data_rows}"
-                "</table>"
-                "</body>"
-                "</html>")
-    # trackingdb.trackingdb.load_old_d
-
-    header_row = "".join(["<th>{}</th>".format(item)
-                          for item in trackingdb.columns()])
-    data_rows = "\n".join(["<tr><td>{}</td></tr>"
-                           .format("</td><td>".join([str(i) for i in item]))
-                           for item in trackingdb.get_data()])
-    return template.format(header_row=header_row,
-                           data_rows=data_rows)
+# @app.route("/test_form", methods=['GET', 'POST'])
+# @crossdomain(origin=CROSS_DOMAIN_SITE)
+# def test_form():
+#     form_path = os.path.join(os.path.abspath("../../"),
+#                              "wordpress",
+#                              "currentform.txt")
+#     # html = ""
+#     with open(form_path, "r") as form_file:
+#         html = form_file.read()
+#     return html.replace("104.131.189.93", "localhost")
+#
+#
+# @app.route("/statistics", methods=['GET', 'POST'])
+# @crossdomain(origin=CROSS_DOMAIN_SITE)
+# def statistics():
+#     form_path = os.path.join(os.path.abspath("../../"),
+#                              "wordpress",
+#                              "statistics.html")
+#     # html = ""
+#     with open(form_path, "r") as form_file:
+#         html = form_file.read()
+#     return html.replace("104.131.189.93", "localhost")
+#
+#
+# @app.route("/database", methods=['GET'])
+# @crossdomain(origin=CROSS_DOMAIN_SITE)
+# def database_data():
+#     template = ("<html>"
+#                 "<body>"
+#                 "<h1>Database data</h1>"
+#                 "<table>"
+#                 "<tr>{header_row}</tr>"
+#                 "{data_rows}"
+#                 "</table>"
+#                 "</body>"
+#                 "</html>")
+#     # trackingdb.trackingdb.load_old_d
+#
+#     header_row = "".join(["<th>{}</th>".format(item)
+#                           for item in trackingdb.columns()])
+#     data_rows = "\n".join(["<tr><td>{}</td></tr>"
+#                            .format("</td><td>".join([str(i) for i in item]))
+#                            for item in trackingdb.get_data()])
+#     return template.format(header_row=header_row,
+#                            data_rows=data_rows)
 
 
 @app.route("/statistics/reg_by_month")
