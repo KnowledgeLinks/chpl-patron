@@ -62,6 +62,14 @@ class RemoteApiError(Exception):
                                                   get_text(response)))
 
 
+class PasswordError(Exception):
+    def __init__(self, response):
+        self.response = response
+        msg = response.json().get("description", "Password is not valid")
+        self.msg = msg.replace("PIN", "Password")
+        super().__init__(self.msg)
+
+
 class RegisteredEmailError(Exception):
     def __init__(self, email):
         self.email = email
