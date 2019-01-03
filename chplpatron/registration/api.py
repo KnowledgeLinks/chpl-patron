@@ -20,6 +20,7 @@ from chplpatron.registration.validation import (validate_form,
                                                 validate_password)
 from chplpatron.registration.actions import register_patron
 from chplpatron import trackingdb
+from chplpatron import exceptions
 
 from instance import config
 
@@ -171,6 +172,13 @@ def index():
                                           success_uri,
                                           temp_card_number,
                                           boundary['valid'])})
+            except exceptions.PasswordError as p_err:
+                error_obj: {"field": Flds.password.frm,
+                            "valid": False,
+                            "message": p_err.msg}
+                valid_form['errors'].append(error_obj)
+                valid_form['valid'] = False
+                return jsonify(valid_form)
             except Exception as err1:
                 log.error(err1)
                 log.error({key: value

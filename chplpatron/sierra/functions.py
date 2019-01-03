@@ -5,6 +5,7 @@ import datetime
 
 from chplpatron.exceptions import (RemoteApiError,
                                    RegisteredEmailError,
+                                   PasswordError,
                                    TokenError)
 from .lookups import (Apis,
                       PatronFlds)
@@ -102,6 +103,8 @@ def create_patron(patron):
                                 json=patron.to_dict())
     patron_id = result.json().get("link", "").split("/")[-1]
     if result.status_code > 299:
+        if "PIN " in result.text:
+            raise PasswordError(result)
         raise RemoteApiError(result)
     if patron_id:
         set_barcode(patron_id, patron_id)
