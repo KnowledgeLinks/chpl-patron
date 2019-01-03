@@ -69,8 +69,9 @@ class TestSetEmail(unittest.TestCase):
 
     def test_lookup_name(self):
         result = sierra.lookup_by_name("Ztestd, Jess")
-        sierra.set_email("m@m.com", result['id'])
-        result = sierra.lookup_by_name("Ztestd, Jess")
+        patron = sierra.Patron()
+        patron.pin = "121212"
+        sierra.update_patron(patron, result.get("id"))
         pprint.pprint(result)
 
     def tearDown(self):

@@ -4,6 +4,7 @@ __author__ = "Jeremy Nelson, Mike Stabile"
 import os
 import sys
 import logging
+from logging.handlers import RotatingFileHandler
 
 from flask import (Flask,
                    request,
@@ -27,6 +28,12 @@ from instance import config
 app = Flask(__name__)
 app.config.from_mapping()
 app.config.from_object(config)
+
+if __name__ != '__main__':
+    gunicorn_logger = logging.getLogger('gunicorn.error')
+    app.logger.handlers = gunicorn_logger.handlers
+    app.logger.setLevel(gunicorn_logger.level)
+
 LOG_FMT = '%(asctime)s %(name)-12s %(levelname)-8s %(message)s'
 formatter = logging.Formatter(LOG_FMT)
 logging.basicConfig(level=logging.DEBUG,
@@ -34,23 +41,27 @@ logging.basicConfig(level=logging.DEBUG,
                     datefmt='%m-%d %H:%M')
 logging.getLogger("urllib3.connectionpool").setLevel(logging.CRITICAL)
 logging.getLogger("werkzeug").setLevel(logging.WARNING)
-log = logging.getLogger('registration')
+log = app.logger
 log.setLevel(logging.INFO)
 LOG_PATH = os.path.abspath("../../logging") \
            if not hasattr(config, 'LOG_PATH') \
            else config.LOG_PATH
 os.makedirs(LOG_PATH, exist_ok=True)
-error_handler = logging.FileHandler(os.path.join(LOG_PATH, "errors.log"))
-info_handler = logging.FileHandler(os.path.join(LOG_PATH, "general.log"))
-console_handler = logging.StreamHandler()
-console_handler.setFormatter(formatter)
-console_handler.setLevel(logging.DEBUG)
+error_handler = RotatingFileHandler(os.path.join(LOG_PATH, "errors.log"),
+                                    maxBytes=10 * 1024 * 1024,
+                                    backupCount=5)
+info_handler = RotatingFileHandler(os.path.join(LOG_PATH, "general.log"),
+                                   maxBytes=10 * 1024 * 1024,
+                                   backupCount=5)
+# console_handler = logging.StreamHandler()
+# console_handler.setFormatter(formatter)
+# console_handler.setLevel(logging.DEBUG)
 error_handler.setLevel(logging.ERROR)
 error_handler.setFormatter(formatter)
 info_handler.setLevel(logging.INFO)
 info_handler.setFormatter(formatter)
 log.addHandler(error_handler)
-log.addHandler(console_handler)
+# log.addHandler(console_handler)
 log.addHandler(info_handler)
 log.setLevel(logging.INFO)
 
@@ -86,7 +97,7 @@ def request_boundary_check(**kwargs):
         rtn_msg = boundary_check(**address)
         return rtn_msg if kwargs else jsonify(rtn_msg)
     except Exception as err:
-        log.error(err)
+        log.exception(err)
 
 
 @app.route("/email_check")
@@ -104,7 +115,7 @@ def request_email_check():
             return jsonify(True)
         return jsonify(rtn_msg['message'])
     except Exception as err:
-        log.error(err)
+        log.exception(err)
 
 
 @app.route("/validate_password")
@@ -119,7 +130,7 @@ def request_validate_password():
             return jsonify(True)
         return jsonify(rtn_msg['message'])
     except Exception as err:
-        log.error(err)
+        log.exception(err)
 
 
 @app.route("/postal_code")
@@ -134,7 +145,7 @@ def request_postal_code():
                               debug=request.args.get("debug", False))
         return jsonify(rtn_msg)
     except Exception as err:
-        log.error(err)
+        log.exception(err)
 
 
 @app.route("/", methods=["POST"])
@@ -149,6 +160,7 @@ def index():
             return "Method not supported"
         form = request.form.to_dict()
         valid_form = validate_form(form)
+
         if valid_form['valid']:
             lookup = form
             address = {'street': lookup.get(Flds.street.frm),
@@ -160,10 +172,11 @@ def index():
             location = "internal" if request.remote_addr \
                        and request.remote_addr.startswith(config.INTERNAL_IP) \
                        else "external"
-            temp_card_number = register_patron(valid_form['form'],
-                                               location,
-                                               boundary)
             try:
+                temp_card_number = register_patron(valid_form['form'],
+                                                   location,
+                                                   boundary)
+
                 if temp_card_number is not None:
                     if location == "internal":
                         success_uri = config.INTERNAL_SUCCESS
@@ -175,6 +188,7 @@ def index():
                                           temp_card_number,
                                           boundary['valid'])})
             except exceptions.PasswordError as p_err:
+                # log.exception(p_err)
                 error_obj = {"field": Flds.password.frm,
                              "valid": False,
                              "message": p_err.msg}
@@ -182,7 +196,7 @@ def index():
                 valid_form['valid'] = False
                 return jsonify(valid_form)
             except Exception as err1:
-                log.error(err1)
+                log.exception(err1.with_traceback())
                 log.error({key: value
                            for key, value in form.items()
                            if "password" not in key.lower()})
@@ -193,7 +207,7 @@ def index():
         else:
             return jsonify(valid_form)
     except Exception as err:
-        log.error(err)
+        log.exception(err)
         log.error({key: value
                    for key, value in form.items()
                    if "password" not in key.lower()})
@@ -202,51 +216,52 @@ def index():
                                                     ("Failed to register "
                                                      "Patron"))})
 
-# @app.route("/test_form", methods=['GET', 'POST'])
-# @crossdomain(origin=CROSS_DOMAIN_SITE)
-# def test_form():
-#     form_path = os.path.join(os.path.abspath("../../"),
-#                              "wordpress",
-#                              "currentform.txt")
-#     # html = ""
-#     with open(form_path, "r") as form_file:
-#         html = form_file.read()
-#     return html.replace("104.131.189.93", "localhost")
-#
-#
-# @app.route("/statistics", methods=['GET', 'POST'])
-# @crossdomain(origin=CROSS_DOMAIN_SITE)
-# def statistics():
-#     form_path = os.path.join(os.path.abspath("../../"),
-#                              "wordpress",
-#                              "statistics.html")
-#     # html = ""
-#     with open(form_path, "r") as form_file:
-#         html = form_file.read()
-#     return html.replace("104.131.189.93", "localhost")
-#
-#
-# @app.route("/database", methods=['GET'])
-# @crossdomain(origin=CROSS_DOMAIN_SITE)
-# def database_data():
-#     template = ("<html>"
-#                 "<body>"
-#                 "<h1>Database data</h1>"
-#                 "<table>"
-#                 "<tr>{header_row}</tr>"
-#                 "{data_rows}"
-#                 "</table>"
-#                 "</body>"
-#                 "</html>")
-#     # trackingdb.trackingdb.load_old_d
-#
-#     header_row = "".join(["<th>{}</th>".format(item)
-#                           for item in trackingdb.columns()])
-#     data_rows = "\n".join(["<tr><td>{}</td></tr>"
-#                            .format("</td><td>".join([str(i) for i in item]))
-#                            for item in trackingdb.get_data()])
-#     return template.format(header_row=header_row,
-#                            data_rows=data_rows)
+
+@app.route("/test_form", methods=['GET', 'POST'])
+@crossdomain(origin=CROSS_DOMAIN_SITE)
+def test_form():
+    form_path = os.path.join(os.path.abspath("../../"),
+                             "wordpress",
+                             "currentform.txt")
+    # html = ""
+    with open(form_path, "r") as form_file:
+        html = form_file.read()
+    return html.replace("104.131.189.93", "localhost")
+
+
+@app.route("/statistics", methods=['GET', 'POST'])
+@crossdomain(origin=CROSS_DOMAIN_SITE)
+def statistics():
+    form_path = os.path.join(os.path.abspath("../../"),
+                             "wordpress",
+                             "statistics.html")
+    # html = ""
+    with open(form_path, "r") as form_file:
+        html = form_file.read()
+    return html.replace("104.131.189.93", "localhost")
+
+
+@app.route("/database", methods=['GET'])
+@crossdomain(origin=CROSS_DOMAIN_SITE)
+def database_data():
+    template = ("<html>"
+                "<body>"
+                "<h1>Database data</h1>"
+                "<table>"
+                "<tr>{header_row}</tr>"
+                "{data_rows}"
+                "</table>"
+                "</body>"
+                "</html>")
+    # trackingdb.trackingdb.load_old_d
+
+    header_row = "".join(["<th>{}</th>".format(item)
+                          for item in trackingdb.columns()])
+    data_rows = "\n".join(["<tr><td>{}</td></tr>"
+                           .format("</td><td>".join([str(i) for i in item]))
+                           for item in trackingdb.get_data()])
+    return template.format(header_row=header_row,
+                           data_rows=data_rows)
 
 
 @app.route("/statistics/reg_by_month")
@@ -262,4 +277,4 @@ if __name__ == '__main__':
     print(os.path.abspath("../../"))
     sys.path.extend(os.path.abspath("../../"))
     print("Starting Chapel Hills Patron Registration")
-    app.run(host='0.0.0.0', port=3500, debug=True, ssl_context='adhoc')
+    app.run(host='0.0.0.0', port=3500, debug=True)

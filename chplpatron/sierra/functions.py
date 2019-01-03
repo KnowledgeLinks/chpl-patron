@@ -124,6 +124,7 @@ def update_patron(patron, patron_id):
                                 headers=get_headers(),
                                 json=patron.to_dict())
     if result.status_code != 204:
+        raise PasswordError(result)
         raise RemoteApiError(result)
     return True
 
