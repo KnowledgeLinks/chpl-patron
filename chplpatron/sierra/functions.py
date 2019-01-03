@@ -101,6 +101,8 @@ def create_patron(patron):
     result = APIS.create_patron(headers=get_headers(),
                                 json=patron.to_dict())
     patron_id = result.json().get("link", "").split("/")[-1]
+    if result.status_code > 299:
+        raise RemoteApiError(result)
     if patron_id:
         set_barcode(patron_id, patron_id)
     return patron_id
