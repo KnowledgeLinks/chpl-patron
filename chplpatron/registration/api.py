@@ -32,6 +32,8 @@ formatter = logging.Formatter(LOG_FMT)
 logging.basicConfig(level=logging.DEBUG,
                     format=LOG_FMT,
                     datefmt='%m-%d %H:%M')
+logging.getLogger("urllib3.connectionpool").setLevel(logging.CRITICAL)
+logging.getLogger("werkzeug").setLevel(logging.WARNING)
 log = logging.getLogger('registration')
 log.setLevel(logging.INFO)
 LOG_PATH = os.path.abspath("../../logging") \
@@ -182,7 +184,7 @@ def index():
             except Exception as err1:
                 log.error(err1)
                 log.error({key: value
-                           for key, value in form
+                           for key, value in form.items()
                            if "password" not in key.lower()})
             return jsonify({"valid": True,
                             "url": "{}?error={}".format(
@@ -193,7 +195,7 @@ def index():
     except Exception as err:
         log.error(err)
         log.error({key: value
-                   for key, value in form
+                   for key, value in form.items()
                    if "password" not in key.lower()})
         return jsonify({"valid": True,
                         "url": "{}?error={}".format(config.ERROR_URI,
@@ -260,4 +262,4 @@ if __name__ == '__main__':
     print(os.path.abspath("../../"))
     sys.path.extend(os.path.abspath("../../"))
     print("Starting Chapel Hills Patron Registration")
-    app.run(host='0.0.0.0', port=3500, debug=True)
+    app.run(host='0.0.0.0', port=3500, debug=True, ssl_context='adhoc')
