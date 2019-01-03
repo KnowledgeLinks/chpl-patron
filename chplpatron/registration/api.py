@@ -175,9 +175,9 @@ def index():
                                           temp_card_number,
                                           boundary['valid'])})
             except exceptions.PasswordError as p_err:
-                error_obj: {"field": Flds.password.frm,
-                            "valid": False,
-                            "message": p_err.msg}
+                error_obj = {"field": Flds.password.frm,
+                             "valid": False,
+                             "message": p_err.msg}
                 valid_form['errors'].append(error_obj)
                 valid_form['valid'] = False
                 return jsonify(valid_form)
