@@ -62,6 +62,21 @@ class TestFindByName(unittest.TestCase):
         pass
 
 
+class TestSetEmail(unittest.TestCase):
+
+    def setUp(self):
+        pass
+
+    def test_lookup_name(self):
+        result = sierra.lookup_by_name("Ztestd, Jess")
+        sierra.set_email("m@m.com", result['id'])
+        result = sierra.lookup_by_name("Ztestd, Jess")
+        pprint.pprint(result)
+
+    def tearDown(self):
+        pass
+
+
 class TestFindById(unittest.TestCase):
 
     def setUp(self):

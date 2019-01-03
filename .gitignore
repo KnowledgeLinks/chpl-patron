@@ -5,3 +5,4 @@ instance/
 __pycache__*
 nohup.*
 *.pyc
+logging/

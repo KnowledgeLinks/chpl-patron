@@ -3,7 +3,7 @@ __author__ = "Jeremy Nelson, Mike Stabile"
 
 import os
 import sys
-import pprint
+import logging
 
 from flask import (Flask,
                    request,
@@ -26,12 +26,36 @@ from instance import config
 app = Flask(__name__)
 app.config.from_mapping()
 app.config.from_object(config)
+LOG_FMT = '%(asctime)s %(name)-12s %(levelname)-8s %(message)s'
+formatter = logging.Formatter(LOG_FMT)
+logging.basicConfig(level=logging.DEBUG,
+                    format=LOG_FMT,
+                    datefmt='%m-%d %H:%M')
+log = logging.getLogger('registration')
+log.setLevel(logging.INFO)
+LOG_PATH = os.path.abspath("../../logging") \
+           if not hasattr(config, 'LOG_PATH') \
+           else config.LOG_PATH
+os.makedirs(LOG_PATH, exist_ok=True)
+error_handler = logging.FileHandler(os.path.join(LOG_PATH, "errors.log"))
+info_handler = logging.FileHandler(os.path.join(LOG_PATH, "general.log"))
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(formatter)
+console_handler.setLevel(logging.DEBUG)
+error_handler.setLevel(logging.ERROR)
+error_handler.setFormatter(formatter)
+info_handler.setLevel(logging.INFO)
+info_handler.setFormatter(formatter)
+log.addHandler(error_handler)
+log.addHandler(console_handler)
+log.addHandler(info_handler)
+log.setLevel(logging.INFO)
 
-# app.config.INTERNAL_IP = "198.85.222.29"
-
-print("##### CONFIGURATION VALUES ###################")
-pprint.pprint(app.config)
-print("##############################################")
+HIDE = ['SECRET_KEY']
+log.info("##### CONFIGURATION VALUES ###################\n%s" % \
+         "\n".join(["\t\t\t%s: %s" % (key, value)
+                    for key, value in app.config.items()
+                    if key not in HIDE]))
 
 CURRENT_DIR = os.path.abspath(os.curdir)
 
@@ -50,14 +74,16 @@ def request_boundary_check(**kwargs):
     :param kwargs:
     :return:
     """
-
-    lookup = kwargs if kwargs else request.args
-    address = {'street': lookup.get(Flds.street.frm),
-               'city': lookup.get(Flds.city.frm),
-               'state': lookup.get(Flds.state.frm),
-               'postal_code': lookup.get(Flds.postal_code.frm)}
-    rtn_msg = boundary_check(**address)
-    return rtn_msg if kwargs else jsonify(rtn_msg)
+    try:
+        lookup = kwargs if kwargs else request.args
+        address = {'street': lookup.get(Flds.street.frm),
+                   'city': lookup.get(Flds.city.frm),
+                   'state': lookup.get(Flds.state.frm),
+                   'postal_code': lookup.get(Flds.postal_code.frm)}
+        rtn_msg = boundary_check(**address)
+        return rtn_msg if kwargs else jsonify(rtn_msg)
+    except Exception as err:
+        log.error(err)
 
 
 @app.route("/email_check")
@@ -68,11 +94,14 @@ def request_email_check():
         request args:
             g587-email: the email address to check
     """
-    rtn_msg = email_check(email=request.args.get(Flds.email.frm, "").lower(),
-                          debug=request.args.get("debug", False))
-    if rtn_msg['valid']:
-        return jsonify(True)
-    return jsonify(rtn_msg['message'])
+    try:
+        rtn_msg = email_check(email=request.args.get(Flds.email.frm, "").lower(),
+                              debug=request.args.get("debug", False))
+        if rtn_msg['valid']:
+            return jsonify(True)
+        return jsonify(rtn_msg['message'])
+    except Exception as err:
+        log.error(err)
 
 
 @app.route("/validate_password")
@@ -81,10 +110,13 @@ def request_validate_password():
     """
     gets the associated cities for the specified postal code
     """
-    rtn_msg = validate_password(request.args.get(Flds.password.frm, ""))
-    if rtn_msg['valid']:
-        return jsonify(True)
-    return jsonify(rtn_msg['message'])
+    try:
+        rtn_msg = validate_password(request.args.get(Flds.password.frm, ""))
+        if rtn_msg['valid']:
+            return jsonify(True)
+        return jsonify(rtn_msg['message'])
+    except Exception as err:
+        log.error(err)
 
 
 @app.route("/postal_code")
@@ -93,9 +125,13 @@ def request_postal_code():
     """
     gets the associated cities for the specified postal code
     """
-    rtn_msg = postal_code(zipcode=request.args.get(Flds.postal_code.frm, ""),
-                          debug=request.args.get("debug", False))
-    return jsonify(rtn_msg)
+    try:
+        rtn_msg = postal_code(zipcode=request.args.get(Flds.postal_code.frm,
+                                                       ""),
+                              debug=request.args.get("debug", False))
+        return jsonify(rtn_msg)
+    except Exception as err:
+        log.error(err)
 
 
 @app.route("/", methods=["POST"])
@@ -105,44 +141,56 @@ def index():
     Default view for handling post submissions from a posted form
 
     """
-    if not request.method.startswith("POST"):
-        return "Method not supported"
-    form = request.form.to_dict()
-    valid_form = validate_form(form)
-    if valid_form['valid']:
-        lookup = form
-        address = {'street': lookup.get(Flds.street.frm),
-                   'city': lookup.get(Flds.city.frm),
-                   'state': lookup.get(Flds.state.frm),
-                   'postal_code': lookup.get(Flds.postal_code.frm)}
+    try:
+        if not request.method.startswith("POST"):
+            return "Method not supported"
+        form = request.form.to_dict()
+        valid_form = validate_form(form)
+        if valid_form['valid']:
+            lookup = form
+            address = {'street': lookup.get(Flds.street.frm),
+                       'city': lookup.get(Flds.city.frm),
+                       'state': lookup.get(Flds.state.frm),
+                       'postal_code': lookup.get(Flds.postal_code.frm)}
 
-        boundary = boundary_check(**address)
-        temp_card_number = register_patron(valid_form['form'],
-                                           "internal"
-                                           if request.remote_addr
-                                           and request
-                                           .remote_addr
-                                           .startswith(config.INTERNAL_IP) else
-                                           "external",
-                                           boundary)
-        if temp_card_number is not None:
-            if request.remote_addr.startswith(config.INTERNAL_IP):
-                success_uri = config.INTERNAL_SUCCESS
-            else:
-                success_uri = config.SUCCESS_URI
-            return jsonify({"valid": True,
-                            "url": "{}?number={}&boundary={}".format(
-                                  success_uri,
-                                  temp_card_number,
-                                  boundary['valid'])})
-        else:
+            boundary = boundary_check(**address)
+            location = "internal" if request.remote_addr \
+                       and request.remote_addr.startswith(config.INTERNAL_IP) \
+                       else "external"
+            temp_card_number = register_patron(valid_form['form'],
+                                               location,
+                                               boundary)
+            try:
+                if temp_card_number is not None:
+                    if location == "internal":
+                        success_uri = config.INTERNAL_SUCCESS
+                    else:
+                        success_uri = config.SUCCESS_URI
+                    return jsonify({"valid": True,
+                                    "url": "{}?number={}&boundary={}".format(
+                                          success_uri,
+                                          temp_card_number,
+                                          boundary['valid'])})
+            except Exception as err1:
+                log.error(err1)
+                log.error({key: value
+                           for key, value in form
+                           if "password" not in key.lower()})
             return jsonify({"valid": True,
                             "url": "{}?error={}".format(
                                     config.ERROR_URI,
                                     "Failed to register Patron")})
-    else:
-        return jsonify(valid_form)
-
+        else:
+            return jsonify(valid_form)
+    except Exception as err:
+        log.error(err)
+        log.error({key: value
+                   for key, value in form
+                   if "password" not in key.lower()})
+        return jsonify({"valid": True,
+                        "url": "{}?error={}".format(config.ERROR_URI,
+                                                    ("Failed to register "
+                                                     "Patron"))})
 
 # @app.route("/test_form", methods=['GET', 'POST'])
 # @crossdomain(origin=CROSS_DOMAIN_SITE)
