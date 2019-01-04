@@ -4,6 +4,7 @@ __author__ = "Jeremy Nelson, Mike Stabile"
 import os
 import sys
 import logging
+
 from logging.handlers import RotatingFileHandler
 
 from flask import (Flask,
@@ -109,7 +110,7 @@ def request_email_check():
             g587-email: the email address to check
     """
     try:
-        rtn_msg = email_check(email=request.args.get(Flds.email.frm, "").lower(),
+        rtn_msg = email_check(email=request.args.get(Flds.email.frm, ""),
                               debug=request.args.get("debug", False))
         if rtn_msg['valid']:
             return jsonify(True)
@@ -176,7 +177,6 @@ def index():
                 temp_card_number = register_patron(valid_form['form'],
                                                    location,
                                                    boundary)
-
                 if temp_card_number is not None:
                     if location == "internal":
                         success_uri = config.INTERNAL_SUCCESS
@@ -274,7 +274,12 @@ def reg_by_month():
 
 
 if __name__ == '__main__':
+    context = ("../../instance/chapelhillpubliclibrary_org.crt",
+               "../../instance/private_key.txt")
     print(os.path.abspath("../../"))
     sys.path.extend(os.path.abspath("../../"))
     print("Starting Chapel Hills Patron Registration")
-    app.run(host='0.0.0.0', port=3500, debug=True)
+
+    # app.run(host='0.0.0.0', port=3500, debug=True)
+    app.run(host='0.0.0.0', port=3500, debug=True, ssl_context=context)
+
