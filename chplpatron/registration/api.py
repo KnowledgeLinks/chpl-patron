@@ -4,6 +4,7 @@ __author__ = "Jeremy Nelson, Mike Stabile"
 import os
 import sys
 import logging
+import pdb
 
 from flask import (Flask,
                    request,
@@ -160,10 +161,10 @@ def index():
             location = "internal" if request.remote_addr \
                        and request.remote_addr.startswith(config.INTERNAL_IP) \
                        else "external"
-            temp_card_number = register_patron(valid_form['form'],
-                                               location,
-                                               boundary)
             try:
+                temp_card_number = register_patron(valid_form['form'],
+                                                   location,
+                                                   boundary)
                 if temp_card_number is not None:
                     if location == "internal":
                         success_uri = config.INTERNAL_SUCCESS
@@ -259,7 +260,12 @@ def reg_by_month():
 
 
 if __name__ == '__main__':
+    #from OpenSSL import SSL
+    #context = SSL.Context(SSL.SSLv23_METHOD)
+    #context.use_privatekey_file("../../instance/private_key.txt")
+    #context.use_certificate_file("../../instance/chapelhillpubliclibrary_org.crt")
+    context = ("../../instance/chapelhillpubliclibrary_org.crt", "../../instance/private_key.txt")
     print(os.path.abspath("../../"))
     sys.path.extend(os.path.abspath("../../"))
     print("Starting Chapel Hills Patron Registration")
-    app.run(host='0.0.0.0', port=3500, debug=True, ssl_context='adhoc')
+    app.run(host='0.0.0.0', port=3500, debug=True, ssl_context=context)
