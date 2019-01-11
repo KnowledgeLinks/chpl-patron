@@ -37,7 +37,7 @@ def register_patron(form, location, boundary):
     """
     patron = form_to_api(form)
     var_field = sierra.VarField()
-    var_field.fieldTag = "x"
+    var_field.fieldTag = "m"
     var_field.content = boundary['message']
     patron.varFields = var_field
     patron.expirationDate = (datetime.datetime.now() + datetime.timedelta(30))\
