@@ -69,10 +69,69 @@ class TestSetEmail(unittest.TestCase):
 
     def test_lookup_name(self):
         result = sierra.lookup_by_name("Ztestd, Jess")
-        patron = sierra.Patron()
-        patron.pin = "121212"
-        sierra.update_patron(patron, result.get("id"))
+        # patron = sierra.Patron()
+        # patron.pin = "121212"
+        # sierra.update_patron(patron, result.get("id"))
         pprint.pprint(result)
+
+    def tearDown(self):
+        pass
+
+
+class TestSetMessages(unittest.TestCase):
+
+    def setUp(self):
+        pass
+
+    def test_lookup_name(self):
+        msg = sierra.VarField()
+        msg.fieldTag = "m"
+        msg.content = "Not in boundary message"
+
+        note = sierra.VarField()
+        note.fieldTag = "x"
+        note.content = "Not in boundary note"
+
+        # Ztestd, Jess - id: 354311
+        # set NO pMessage and VarField('m', "Not in boundary message")
+        id = 354311
+        patron = sierra.Patron()
+        patron.patronType = 16
+        # patron.varFields = [msg, note]
+        sierra.update_patron(patron, id)
+        result = sierra.lookup_by_id(id)
+        print(result.get('names')[0], " - id: ", id)
+        print("pMessage :", result.get('pMessage'))
+        print("patronType: ", result.get("patronType"))
+        pprint.pprint(result.get('varFields'))
+
+        # Zteste, Jack - id: 354313
+        # set pMessage = 'f' - no varfield message
+        id = 354313
+        patron = sierra.Patron()
+        # patron.pMessage = 'f'
+        # patron.varFields = note
+        patron.patronType = 16
+        sierra.update_patron(patron, id)
+        result = sierra.lookup_by_id(id)
+        print(result.get('names')[0], " - id: ", id)
+        print("pMessage :", result.get('pMessage'))
+        print("patronType: ", result.get("patronType"))
+        pprint.pprint(result.get('varFields'))
+
+        # Ztestb, Jane - id: 354240
+        # set pMessage: 'f' and VarField('m', "Not in boundary message")
+        id = 354240
+        patron = sierra.Patron()
+        # patron.pMessage = 'f'
+        # patron.varFields = [msg, note]
+        patron.patronType = 16
+        sierra.update_patron(patron, id)
+        result = sierra.lookup_by_id(id)
+        print(result.get('names')[0], " - id: ", id)
+        print("pMessage :", result.get('pMessage'))
+        print("patronType: ", result.get("patronType"))
+        pprint.pprint(result.get('varFields'))
 
     def tearDown(self):
         pass
