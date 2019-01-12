@@ -148,10 +148,11 @@ def form_to_api(form):
     address = Address()
     address.type = "a"
     address.lines = [form.get(Flds.street.frm),
-                     "{city}, {state} {postal_code}"
-                         .format(city=form.get(Flds.city.frm),
-                                 state=form.get(Flds.state.frm),
-                                 postal_code=form.get(Flds.postal_code.frm))]
+                     "{city} {state} {postal_code}"
+                     .format(city=form.get(Flds.city.frm).upper(),
+                             state=form.get(Flds.state.frm).upper(),
+                             postal_code=form.get(Flds.postal_code.frm))
+                         .upper()]
     patron.addresses = address
     phone = Phone()
     phone.type = "t"
