@@ -281,5 +281,5 @@ if __name__ == '__main__':
     print("Starting Chapel Hills Patron Registration")
 
     # app.run(host='0.0.0.0', port=3500, debug=True)
-    app.run(host='0.0.0.0', port=3500, debug=True, ssl_context=context)
+    app.run(host='0.0.0.0', port=8443, debug=True, ssl_context=context)
 
