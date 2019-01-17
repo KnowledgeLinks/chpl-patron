@@ -3,9 +3,9 @@ __author__ = "Jeremy Nelson, Mike Stabile"
 
 import os
 import sys
-import logging
-
-from logging.handlers import RotatingFileHandler
+# import logging
+#
+# from logging.handlers import RotatingFileHandler
 
 from flask import (Flask,
                    request,
@@ -30,47 +30,47 @@ app = Flask(__name__)
 app.config.from_mapping()
 app.config.from_object(config)
 
-if __name__ != '__main__':
-    gunicorn_logger = logging.getLogger('gunicorn.error')
-    app.logger.handlers = gunicorn_logger.handlers
-    app.logger.setLevel(gunicorn_logger.level)
+# if __name__ != '__main__':
+#     gunicorn_logger = logging.getLogger('gunicorn.error')
+#     app.logger.handlers = gunicorn_logger.handlers
+#     app.logger.setLevel(gunicorn_logger.level)
 
-LOG_FMT = '%(asctime)s %(name)-12s %(levelname)-8s %(message)s'
-formatter = logging.Formatter(LOG_FMT)
-logging.basicConfig(level=logging.DEBUG,
-                    format=LOG_FMT,
-                    datefmt='%m-%d %H:%M')
-logging.getLogger("urllib3.connectionpool").setLevel(logging.CRITICAL)
-logging.getLogger("werkzeug").setLevel(logging.WARNING)
-log = app.logger
-log.setLevel(logging.INFO)
-LOG_PATH = os.path.abspath("../../logging") \
-           if not hasattr(config, 'LOG_PATH') \
-           else config.LOG_PATH
-os.makedirs(LOG_PATH, exist_ok=True)
-error_handler = RotatingFileHandler(os.path.join(LOG_PATH, "errors.log"),
-                                    maxBytes=10 * 1024 * 1024,
-                                    backupCount=5)
-info_handler = RotatingFileHandler(os.path.join(LOG_PATH, "general.log"),
-                                   maxBytes=10 * 1024 * 1024,
-                                   backupCount=5)
+# LOG_FMT = '%(asctime)s %(name)-12s %(levelname)-8s %(message)s'
+# formatter = logging.Formatter(LOG_FMT)
+# logging.basicConfig(level=logging.DEBUG,
+#                     format=LOG_FMT,
+#                     datefmt='%m-%d %H:%M')
+# logging.getLogger("urllib3.connectionpool").setLevel(logging.CRITICAL)
+# logging.getLogger("werkzeug").setLevel(logging.WARNING)
+# log = app.logger
+# log.setLevel(logging.INFO)
+# LOG_PATH = os.path.abspath("../../logging") \
+#            if not hasattr(config, 'LOG_PATH') \
+#            else config.LOG_PATH
+# os.makedirs(LOG_PATH, exist_ok=True)
+# error_handler = RotatingFileHandler(os.path.join(LOG_PATH, "errors.log"),
+#                                     maxBytes=10 * 1024 * 1024,
+#                                     backupCount=5)
+# info_handler = RotatingFileHandler(os.path.join(LOG_PATH, "general.log"),
+#                                    maxBytes=10 * 1024 * 1024,
+#                                    backupCount=5)
 # console_handler = logging.StreamHandler()
 # console_handler.setFormatter(formatter)
 # console_handler.setLevel(logging.DEBUG)
-error_handler.setLevel(logging.ERROR)
-error_handler.setFormatter(formatter)
-info_handler.setLevel(logging.INFO)
-info_handler.setFormatter(formatter)
-log.addHandler(error_handler)
-# log.addHandler(console_handler)
-log.addHandler(info_handler)
-log.setLevel(logging.INFO)
+# error_handler.setLevel(logging.ERROR)
+# error_handler.setFormatter(formatter)
+# info_handler.setLevel(logging.INFO)
+# info_handler.setFormatter(formatter)
+# log.addHandler(error_handler)
+# # log.addHandler(console_handler)
+# log.addHandler(info_handler)
+# log.setLevel(logging.INFO)
 
 HIDE = ['SECRET_KEY']
-log.info("##### CONFIGURATION VALUES ###################\n%s" % \
-         "\n".join(["\t\t\t%s: %s" % (key, value)
-                    for key, value in app.config.items()
-                    if key not in HIDE]))
+# log.info("##### CONFIGURATION VALUES ###################\n%s" % \
+#          "\n".join(["\t\t\t%s: %s" % (key, value)
+#                     for key, value in app.config.items()
+#                     if key not in HIDE]))
 
 CURRENT_DIR = os.path.abspath(os.curdir)
 
@@ -98,13 +98,14 @@ def request_boundary_check(**kwargs):
         rtn_msg = boundary_check(**address)
         return rtn_msg if kwargs else jsonify(rtn_msg)
     except Exception as err:
-        log.exception(err)
+        # log.exception(err)
+        pass
 
 
 @app.route("/email_check")
 @crossdomain(origin=CROSS_DOMAIN_SITE)
 def request_email_check():
-    """ Checks to see if the email address as has already been registered 
+    """ Checks to see if the email address as has already been registered
 
         request args:
             g587-email: the email address to check
@@ -116,7 +117,8 @@ def request_email_check():
             return jsonify(True)
         return jsonify(rtn_msg['message'])
     except Exception as err:
-        log.exception(err)
+        pass
+        # log.exception(err)
 
 
 @app.route("/validate_password")
@@ -131,7 +133,8 @@ def request_validate_password():
             return jsonify(True)
         return jsonify(rtn_msg['message'])
     except Exception as err:
-        log.exception(err)
+        pass
+        # log.exception(err)
 
 
 @app.route("/postal_code")
@@ -146,7 +149,8 @@ def request_postal_code():
                               debug=request.args.get("debug", False))
         return jsonify(rtn_msg)
     except Exception as err:
-        log.exception(err)
+        pass
+        # log.exception(err)
 
 
 @app.route("/", methods=["POST"])
@@ -196,10 +200,11 @@ def index():
                 valid_form['valid'] = False
                 return jsonify(valid_form)
             except Exception as err1:
-                log.exception(err1.with_traceback())
-                log.error({key: value
-                           for key, value in form.items()
-                           if "password" not in key.lower()})
+                pass
+                # log.exception(err1.with_traceback())
+                # log.error({key: value
+                #            for key, value in form.items()
+                #            if "password" not in key.lower()})
             return jsonify({"valid": True,
                             "url": "{}?error={}".format(
                                     config.ERROR_URI,
@@ -207,10 +212,10 @@ def index():
         else:
             return jsonify(valid_form)
     except Exception as err:
-        log.exception(err)
-        log.error({key: value
-                   for key, value in form.items()
-                   if "password" not in key.lower()})
+        # log.exception(err)
+        # log.error({key: value
+        #            for key, value in form.items()
+        #            if "password" not in key.lower()})
         return jsonify({"valid": True,
                         "url": "{}?error={}".format(config.ERROR_URI,
                                                     ("Failed to register "
@@ -280,6 +285,5 @@ if __name__ == '__main__':
     sys.path.extend(os.path.abspath("../../"))
     print("Starting Chapel Hills Patron Registration")
 
-    # app.run(host='0.0.0.0', port=3500, debug=True)
-    app.run(host='0.0.0.0', port=8443, debug=True, ssl_context=context)
-
+    app.run(host='0.0.0.0', port=3500, debug=True)
+    # app.run(host='0.0.0.0', port=8443, debug=True, ssl_context=context)

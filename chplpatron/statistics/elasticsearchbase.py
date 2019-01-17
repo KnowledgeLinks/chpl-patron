@@ -22,7 +22,7 @@ class EsBase():
     Base elasticsearch rdfframework class for common es operations
     """
     ln = "EsBase"
-    log_level = logging.DEBUG
+    # log_level = logging.DEBUG
 
     def __init__(self, **kwargs):
         self.es_url = kwargs.get('es_url', config.ES_URL)
@@ -68,15 +68,15 @@ class EsBase():
         :return:
         """
 
-        lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
-        lg.setLevel(self.log_level)
-        err_log = logging.getLogger("index.errors")
+        # lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
+        # lg.setLevel(self.log_level)
+        # err_log = logging.getLogger("index.errors")
         es = self.es
         es_index = get2(kwargs, "es_index", self.es_index)
         reset_index = kwargs.get("reset_index",self.reset_index)
         doc_type = kwargs.get("doc_type", self.doc_type)
 
-        lg.info("Sending %s items to Elasticsearch",len(action_list))
+        # lg.info("Sending %s items to Elasticsearch",len(action_list))
         # bulk_stream = helpers.streaming_bulk(es,
         result = helpers.bulk(es,
                               action_list,
@@ -84,20 +84,20 @@ class EsBase():
                               raise_on_error=False)
         lg.info("FINISHED sending to Elasticsearch")
         if result[1]:
-            lg.info("Formating Error results")
+            # lg.info("Formating Error results")
             new_result = []
             for item in result[1][:5]:
                 for action_item in action_list:
                     if action_item['_id'] == item[list(item)[0]]['_id']:
                         new_result.append((item, action_item,))
                         break
-            err_log.info("Results for batch '%s'\n(%s,\n%s\n%s)",
-                         kwargs.get('batch', "No Batch Number provided"),
-                         result[0],
-                         json.dumps(new_result, indent=4),
-                         json.dumps(result[1]))
+            # err_log.info("Results for batch '%s'\n(%s,\n%s\n%s)",
+            #              kwargs.get('batch', "No Batch Number provided"),
+            #              result[0],
+            #              json.dumps(new_result, indent=4),
+            #              json.dumps(result[1]))
             del new_result
-            lg.info("Finished Error logging")
+            # lg.info("Finished Error logging")
         return result
 
     def save(self, data, **kwargs):
@@ -111,8 +111,8 @@ class EsBase():
             id: es id to use / None = auto
         """
 
-        lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
-        lg.setLevel(self.log_level)
+        # lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
+        # lg.setLevel(self.log_level)
 
         es = self.es
         es_index = get2(kwargs, "es_index", self.es_index)
@@ -134,7 +134,7 @@ class EsBase():
                                doc_type=doc_type,
                                body=data)
 
-        lg.debug("Result = \n%s", pprint.pformat(result))
+        # lg.debug("Result = \n%s", pprint.pformat(result))
         return result
 
     def _find_ids(self,
@@ -153,8 +153,8 @@ class EsBase():
             lookup_fld: field to do the lookup against in full es naming
                 convention i.e. make.raw
         """
-        lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
-        lg.setLevel(self.log_level)
+        # lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
+        # lg.setLevel(self.log_level)
 
         rtn_list = []
         first_time = IsFirst()
@@ -166,7 +166,8 @@ class EsBase():
                 lookup_val = val.replace("#;lookup#;", "")
                 lookup_obj = self.get_item(lookup_val, lookup_field)
                 if first_time.first():
-                    lg.debug("  lookup_obj:\n%s", pprint.pformat(lookup_obj))
+                    pass
+                    # lg.debug("  lookup_obj:\n%s", pprint.pformat(lookup_obj))
                 if lookup_obj:
                     rtn_list.append(Dot(item).set(prop, lookup_obj['_id']))
         return rtn_list
@@ -187,19 +188,19 @@ class EsBase():
             used to overided any of the initialization values for the class
         """
 
-        lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
-        lg.setLevel(self.log_level)
+        # lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
+        # lg.setLevel(self.log_level)
 
         args = inspect.getargvalues(inspect.currentframe())[3]
-        lg.debug("\n****** Args *****:\n%s",
-                 pprint.pformat(args))
+        # lg.debug("\n****** Args *****:\n%s",
+        #          pprint.pformat(args))
 
         es = kwargs.get("es",self.es)
         doc_type = kwargs.get("doc_type", self.doc_type)
         if id_field == "_id":
-            lg.debug("*** _id lookup: index: %s item_id: %s",
-                     self.es_index,
-                     item_id)
+            # lg.debug("*** _id lookup: index: %s item_id: %s",
+            #          self.es_index,
+            #          item_id)
             result = es.get(index=self.es_index,
                             id=item_id)
         else:
@@ -212,15 +213,15 @@ class EsBase():
                     }
                 }
             }
-            lg.debug("*** id_field lookup: index: %s item_id: %s \nDSL: %s",
-                     self.es_index,
-                     item_id,
-                     pprint.pformat(dsl))
+            # lg.debug("*** id_field lookup: index: %s item_id: %s \nDSL: %s",
+            #          self.es_index,
+            #          item_id,
+            #          pprint.pformat(dsl))
             result = es.search(index=self.es_index,
                                doc_type=doc_type,
                                body=dsl)
             result = first(result.get("hits", {}).get("hits", []))
-        lg.debug("\tresult:\n%s", pprint.pformat(result))
+        # lg.debug("\tresult:\n%s", pprint.pformat(result))
         self.item_data = result
 
         return result
@@ -230,12 +231,12 @@ class EsBase():
 
         """
 
-        lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
-        lg.setLevel(self.log_level)
+        # lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
+        # lg.setLevel(self.log_level)
 
         args = inspect.getargvalues(inspect.currentframe())[3]
-        lg.debug("\n****** Args *****:\n%s",
-                 pprint.pformat(args))
+        # lg.debug("\n****** Args *****:\n%s",
+        #          pprint.pformat(args))
 
         es = kwargs.get("es",self.es)
         doc_type = get2(kwargs, "doc_type", self.doc_type)
@@ -301,14 +302,14 @@ class EsBase():
             dsl['filter'] = {
                 "term": { filter_field: filter_value }
             }
-        lg.info("\n-------- size: %s\ndsl:\n%s", size, json.dumps(dsl,indent=4))
+        # lg.info("\n-------- size: %s\ndsl:\n%s", size, json.dumps(dsl,indent=4))
         result = es.search(index=self.es_index,
                            size=size,
                            doc_type=doc_type,
                            body=dsl)
         if kwargs.get("calc"):
             result = self._calc_result(result, kwargs['calc'])
-        lg.debug(pprint.pformat(result))
+        # lg.debug(pprint.pformat(result))
         return result
 
     def _calc_result(self, results, calc):
@@ -327,16 +328,16 @@ class EsBase():
             concatenation: use + field_names and double quotes to add text
                 fld1 +", " + fld2 = "fld1, fld2"
         """
-        lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
-        lg.setLevel(self.log_level)
+        # lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
+        # lg.setLevel(self.log_level)
         # if the calculation is empty exit
         if calc is None:
             return results
-        lg.debug("calc %s", calc)
+        # lg.debug("calc %s", calc)
         # perform concatenation
         hits = results.get('hits',{}).get('hits',[])
         for item in hits:
-            lg.debug("\n*** item:\n%s", pprint.pformat(item))
+            # lg.debug("\n*** item:\n%s", pprint.pformat(item))
             if "+" in calc:
                 calc_parts = calc.split("+")
                 calc_str = ""
@@ -348,7 +349,7 @@ class EsBase():
                             calc_parts[i] = item.get(part)
                         else:
                             calc_parts[i] = Dot(item['_source']).get(part)
-                lg.debug(" calc result: %s", "".join(calc_parts))
+                # lg.debug(" calc result: %s", "".join(calc_parts))
                 item['_source']['__calc'] = "".join(calc_parts)
-        lg.debug("calc %s", calc)
+        # lg.debug("calc %s", calc)
         return results

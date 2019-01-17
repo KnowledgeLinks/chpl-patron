@@ -20,10 +20,10 @@ try:
     MNAME = inspect.stack()[0][1]
 except:
     MNAME = "esloaders"
-MLOG_LVL = logging.DEBUG
-logging.basicConfig(level=logging.DEBUG)
-lg_r = logging.getLogger("requests")
-lg_r.setLevel(logging.CRITICAL)
+# MLOG_LVL = logging.DEBUG
+# logging.basicConfig(level=logging.DEBUG)
+# lg_r = logging.getLogger("requests")
+# lg_r.setLevel(logging.CRITICAL)
 
 from .elasticsearchbase import EsBase, EsMappings
 from instance import config
@@ -34,13 +34,13 @@ from chplpatron import sierra
 class EsSierraBulkLoader(object):
     """ Bulk loads data from the triplestore to elasticsearch """
 
-    ln = "%s-EsRdfBulkLoader" % MNAME
-    log_level = logging.DEBUG
+    # ln = "%s-EsRdfBulkLoader" % MNAME
+    # log_level = logging.DEBUG
 
     def __init__(self, rdf_class, namespace):
-        lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
-        lg.setLevel(self.log_level)
-        lg.debug(" *** Started")
+        # lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
+        # lg.setLevel(self.log_level)
+        # lg.debug(" *** Started")
         self.namespace = namespace
         self.es_index = rdf_class.es_defs.get('kds_esIndex')[0]
         self.es_doc_type = rdf_class.es_defs.get('kds_esDocType')[0]
@@ -86,8 +86,8 @@ class EsSierraBulkLoader(object):
     def _index_group_with_sub(self):
         """ indexes all the URIs defined by the query into Elasticsearch """
 
-        lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
-        lg.setLevel(self.log_level)
+        # lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
+        # lg.setLevel(self.log_level)
         # get a list of all the uri to index
         results = run_sparql_query(sparql=self.query, namespace=self.namespace)
         # results = results[:100]
@@ -105,7 +105,7 @@ class EsSierraBulkLoader(object):
         end = False
         last = False
         while not end:
-            lg.debug("batch %s: %s-%s", batch_num, batch_start, batch_end)
+            # lg.debug("batch %s: %s-%s", batch_num, batch_start, batch_end)
             sub_batch = []
             j = 0
             for i, subj in enumerate(results[batch_start:batch_end]):
@@ -121,7 +121,7 @@ class EsSierraBulkLoader(object):
                     th.start()
                     j = 0
                     sub_batch = []
-            lg.debug(datetime.datetime.now() - self.time_start)
+            # lg.debug(datetime.datetime.now() - self.time_start)
             main_thread = threading.main_thread()
             for t in threading.enumerate():
                 if t is main_thread:
@@ -140,4 +140,4 @@ class EsSierraBulkLoader(object):
                 last = True
             batch_num += 1
             self.batch_data[batch_num] = []
-            lg.debug(datetime.datetime.now() - self.time_start)
+            # lg.debug(datetime.datetime.now() - self.time_start)

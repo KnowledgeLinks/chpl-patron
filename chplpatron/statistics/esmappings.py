@@ -15,8 +15,8 @@ from chplpatron import sierra
 
 MODULE = __import__(__name__)
 
-log = logging.getLogger("esmappings")
-log.setLevel(logging.DEBUG)
+# log = logging.getLogger("esmappings")
+# log.setLevel(logging.DEBUG)
 
 
 class EsMappings:
@@ -25,7 +25,7 @@ class EsMappings:
     attributes:
 
     """
-    log_level = logging.INFO
+    # log_level = logging.INFO
 
     es_mapping = None
     # es_settings = None
@@ -117,7 +117,7 @@ class EsMappings:
 
         # Delete if the index series if reset_idx was passed
         if reset_idx:
-            log.warning("DELETING Elasticsearch INDEX => %s ******", alias)
+            # log.warning("DELETING Elasticsearch INDEX => %s ******", alias)
             self.es.indices.delete(index=alias + "_v*", ignore=[400, 404])
             idx_names['new'] = alias + "_v1"
 

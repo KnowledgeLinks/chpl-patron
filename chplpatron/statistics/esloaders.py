@@ -40,7 +40,7 @@ class EsRdfBulkLoader(object):
     log_level = logging.DEBUG
 
     def __init__(self, rdf_class, tstore_conn, search_conn, **kwargs):
-        log.setLevel(self.log_level)
+        # log.setLevel(self.log_level)
         self.tstore_conn = tstore_conn
         self.search_conn = search_conn
 
@@ -93,10 +93,10 @@ class EsRdfBulkLoader(object):
             new_esbase = copy.copy(search_conn)
             new_esbase.es_index = es_index
             new_esbase.doc_type = es_doc_type
-            log.info("Indexing '%s' into ES index '%s' doctype '%s'",
-                     class_name.pyuri,
-                     es_index,
-                     es_doc_type)
+            # log.info("Indexing '%s' into ES index '%s' doctype '%s'",
+            #          class_name.pyuri,
+            #          es_index,
+            #          es_doc_type)
             return new_esbase
 
         def additional_indexers(rdf_class):
@@ -132,15 +132,15 @@ class EsRdfBulkLoader(object):
             batch_num: the batch number
         """
         bname = '%s-%s' % (batch_num, num)
-        log.debug("batch_num '%s' starting es_json conversion",
-                  bname)
+        # log.debug("batch_num '%s' starting es_json conversion",
+        #           bname)
         qry_data = get_all_item_data([item[0] for item in uri_list],
                                      self.tstore_conn,
                                      rdfclass=self.rdf_class)
-        log.debug("batch_num '%s-%s' query_complete | count: %s",
-                  batch_num,
-                  num,
-                  len(qry_data))
+        # log.debug("batch_num '%s-%s' query_complete | count: %s",
+        #           batch_num,
+        #           num,
+        #           len(qry_data))
         # path = os.path.join(CFG.dirs.cache, "index_pre")
         # if not os.path.exists(path):
         #     os.makedirs(path)
@@ -165,7 +165,7 @@ class EsRdfBulkLoader(object):
                     self.batch_uris[batch_num].append(item.subject)
         del data
         del uri_list
-        log.debug("batch_num '%s-%s' converted to es_json", batch_num, num)
+        # log.debug("batch_num '%s-%s' converted to es_json", batch_num, num)
 
     def get_uri_list(self, **kwargs):
         """
@@ -204,18 +204,18 @@ class EsRdfBulkLoader(object):
     def _index_group_with_subgroup(self, **kwargs):
         """ indexes all the URIs defined by the query into Elasticsearch """
 
-        log.setLevel(self.log_level)
+        # log.setLevel(self.log_level)
         # get a list of all the uri to index
         uri_list = kwargs.get('uri_list', self.get_uri_list())
         if not uri_list:
-            log.info("0 items to index")
+            # log.info("0 items to index")
             return
         # results = results[:100]
         # Start processing through uri
         batch_file = os.path.join(CFG.dirs.logs, "batch_list.txt")
         # with open(batch_file, "w") as fo:
         #     fo.write("{")
-        log.info("'%s' items to index", len(uri_list))
+        # log.info("'%s' items to index", len(uri_list))
         self.time_start = datetime.datetime.now()
         batch_size = kwargs.get("batch_size", 12000)
         if len(uri_list) > batch_size:
@@ -270,7 +270,7 @@ class EsRdfBulkLoader(object):
                     sub_batch = []
                 else:
                     j += 1
-            log.debug(datetime.datetime.now() - self.time_start)
+            # log.debug(datetime.datetime.now() - self.time_start)
             if not kwargs.get("no_threading", False):
                 main_thread = threading.main_thread()
                 for t in threading.enumerate():
@@ -459,7 +459,7 @@ class EsRdfBulkLoader(object):
         rdf_types = [rdf_class.uri] + [item.uri
                                        for item in rdf_class.subclasses]
         sparql = sparql_template.format("\n\t\t".join(rdf_types))
-        log.warn("Deleting index status for %s", rdf_class.uri)
+        # log.warn("Deleting index status for %s", rdf_class.uri)
         return self.tstore_conn.update_query(sparql)
 
     def get_es_ids(self):
@@ -485,5 +485,3 @@ class EsRdfBulkLoader(object):
             action_list = self.es_worker.make_action_list(diff,
                                                           action_type="delete")
             results = self.es_worker.bulk_save(action_list)
-
-
