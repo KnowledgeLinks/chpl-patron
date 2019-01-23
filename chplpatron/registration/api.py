@@ -148,7 +148,7 @@ def request_postal_code():
     except Exception as err:
         log.exception(err)
 
-
+@app.route("/register", methods=["POST"])
 @app.route("/", methods=["POST"])
 @crossdomain(origin=CROSS_DOMAIN_SITE)
 def index():
