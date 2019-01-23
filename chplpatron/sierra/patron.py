@@ -6,7 +6,7 @@ class SierraObject:
     _ignore_attrs = ['to_dict']
     _init_loaded = False
     
-    def __init__(self, data=None, init_load=True):
+    def __init__(self, data=None, init_load=False):
         for key, val in self.__class__.__dict__.items():
             if not key.startswith("_") \
                         and not key.startswith("-")\
@@ -123,9 +123,6 @@ class SierraObject:
             elif isinstance(value, dict):
                 r_dict = {}
                 for s_key, s_value in value.items():
-                    # val = s_value
-                    # if hasattr(s_value, 'to_dict'):
-                    #     val = s_value.to_dict()
                     val = s_value if not hasattr(s_value, 'to_dict') \
                             else s_value.to_dict()
                     if self._test_none(val):
@@ -134,6 +131,35 @@ class SierraObject:
                 rtn[key] = r_dict
             else:
                 val = value if not hasattr(value, 'to_dict') \
+                        else value.to_dict()
+                if self._test_none(val):
+                    rtn[key] = val
+        return rtn
+
+    def to_es(self, all_data=False):
+        rtn = {}
+        for key, value in self.attributes(all_data).items():
+            if isinstance(value, list):
+                r_list = []
+                for item in value:
+                    val = item if not hasattr(item, 'to_es') \
+                            else item.to_dict()
+                    if self._test_none(val):
+                        r_list.append(val)
+                if len(r_list) > 0:
+                    rtn[key] = r_list
+
+            elif isinstance(value, dict):
+                r_dict = {}
+                for s_key, s_value in value.items():
+                    val = s_value if not hasattr(s_value, 'to_es') \
+                            else s_value.to_dict()
+                    if self._test_none(val):
+                        r_dict[s_key] = val
+
+                rtn[key] = r_dict
+            else:
+                val = value if not hasattr(value, 'to_es') \
                         else value.to_dict()
                 if self._test_none(val):
                     rtn[key] = val
@@ -154,10 +180,10 @@ class Codes(SierraObject):
     pcode3 (integer, optional): a library-defined patron data field,
     pcode4 (integer, optional): a library-defined patron data field (CME only)
     """
-    pcode1 = str # string
-    pcode2 = str # string
-    pcode3 = str  # string
-    pcode4 = str  # string
+    pcode1 = str
+    pcode2 = str
+    pcode3 = str
+    pcode4 = str
 
 
 class Address(SierraObject):
@@ -169,6 +195,21 @@ class Address(SierraObject):
     type = str
     _type_options = ["a", "h"]
     _required = ['lines', 'type']
+    _es_blank = {"city": "unk", "state": "unk"}
+
+    def to_es(self):
+        if self.lines:
+            parts = self.lines[-1].split(" ")
+            state = parts[-2]
+            city = " ".join(parts[:-2]).replace(",", "")
+            return {"city": city, "state": state, "addr_type": self.type}
+        return self._es_blank
+
+    @staticmethod
+    def to_es_map():
+        return {"address" : {
+
+        }}
 
 
 class Phone(SierraObject):

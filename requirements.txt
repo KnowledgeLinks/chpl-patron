@@ -4,3 +4,4 @@ gunicorn>=19.5
 python-dateutil
 validate_email
 simplejson
+elasticsearch
