@@ -1,4 +1,5 @@
 instance/
+*.log
 *.idea/
 *.swp
 *.sqlite
