@@ -1,10 +1,15 @@
 import json
 import pdb
+from dateutil.parser import parse as date_parse
+from chplpatron.statistics import esutilities
+from chplpatron.utilities.baseutilities import hash_email
+
+DO_NOT_INDEX = "DO_NOT_INDEX"
 
 
 class SierraObject:
-    _ignore_attrs = ['to_dict']
-    _init_loaded = False
+    _ignore_attrs = ['to_dict', 'to_es']
+    _init_loaded = True
     
     def __init__(self, data=None, init_load=False):
         for key, val in self.__class__.__dict__.items():
@@ -32,7 +37,7 @@ class SierraObject:
 
     def _load_dict(self, data, init_load=True):
         for key, val in data.items():
-            l_key = key if init_load else "-" + key
+            l_key = key if not init_load else "-" + key
             setattr(self, l_key, val)
 
     def __setattr__(self, key, value):
@@ -42,6 +47,8 @@ class SierraObject:
         """
         cls = self.__class__
         l_key = key if not key.startswith("-") else key[1:]
+        if key == 'fixedFields':
+            x = 1
         try:
             cls_ref = getattr(cls, l_key)
         except AttributeError:
@@ -110,6 +117,8 @@ class SierraObject:
     def to_dict(self, all_data=False):
         rtn = {}
         for key, value in self.attributes(all_data).items():
+            if key == 'fixedFields':
+                x=1
             if isinstance(value, list):
                 r_list = []
                 for item in value:
@@ -199,17 +208,27 @@ class Address(SierraObject):
 
     def to_es(self):
         if self.lines:
-            parts = self.lines[-1].split(" ")
-            state = parts[-2]
-            city = " ".join(parts[:-2]).replace(",", "")
-            return {"city": city, "state": state, "addr_type": self.type}
+            try:
+                parts = self.lines[-1].split(" ")
+                state = parts[-2]
+                city = " ".join(parts[:-2]).replace(",", "")
+                return {"city": city, "state": state, "addr_type": self.type}
+            except IndexError:
+                # if unable to parse address pass and return blank address
+                pass
         return self._es_blank
 
     @staticmethod
     def to_es_map():
         return {"address" : {
-
-        }}
+                    "type": "object",
+                    "properties": {
+                         "city": "keyword",
+                         "state": "keyword",
+                         "addr_type": "keyword"
+                     }
+                    }
+                }
 
 
 class Phone(SierraObject):
@@ -221,6 +240,9 @@ class Phone(SierraObject):
     type = str
     _type_options = ["t", "p", "o"]
     _required = ['number', 'type']
+
+    def to_es(self):
+        return None
 
 
 class Block(SierraObject):
@@ -243,7 +265,9 @@ class FixedFieldVal(SierraObject):
     _required = ['value']
 
     def to_dict(self):
-        # pdb.set_trace()
+        return self.value
+
+    def to_es(self):
         return self.value
 
 
@@ -259,14 +283,12 @@ class FixedField(SierraObject):
     value = FixedFieldVal
     display = str
     _required = ["label"]
+    _ignore_labels = ["BIRTH DATE"]
 
-    # def _load_dict(self, data):
-    #     # pdb.set_trace()
-    #     super()._load_dict(data)
-
-    # def to_dict(self):
-    #     # pdb.set_trace()
-    #     return super().to_dict()
+    def to_es(self):
+        if self.label in self._ignore_labels:
+            return None
+        return {self.label: self.value.to_es()}
 
 
 class SubField(SierraObject):
@@ -296,6 +318,11 @@ class VarField(SierraObject):
     content = str
     subfields = [SubField]
     _required = ['fieldTag']
+
+    def to_es(self):
+        if self.fieldTag in ['x', 'm']:
+            return self.to_dict()
+        return None
 
 
 class Patron(SierraObject):
@@ -344,8 +371,65 @@ class Patron(SierraObject):
     langPref = str
     fixedFields = {int: FixedField}
     varFields = [VarField]
+    _es_ignore = ["uniqueIds", "phones", "names", "pin", "barcodes"]
 
-
-
+    def to_es(self):
+        rtn = {}
+        for key, value in self.attributes(True).items():
+            if key in self._es_ignore:
+                continue
+            if key == 'emails':
+                rtn_list = []
+                for email in value:
+                    rtn_list.append(hash_email(email))
+                if rtn_list:
+                    rtn[key] = rtn_list
+            elif isinstance(value, list):
+                rtn_list = []
+                for item in value:
+                    try:
+                        conv = item.to_es()
+                        if conv:
+                            rtn_list.append(conv)
+                    except AttributeError:
+                        if item:
+                            rtn_list.append(item)
+                if rtn_list:
+                    rtn[key] = rtn_list
+            elif isinstance(value, dict):
+                rtn_dict = {}
+                # this applies for FixedFields and we will ignore the key number
+                for item_key, item_value in value.items():
+                    try:
+                        conv_item = item_value.to_es()
+                    except AttributeError:
+                        conv_item = item_value
+                    if not conv_item:
+                        continue
+                    try:
+                        for ky, val in conv_item.items():
+                            rtn_dict[ky] = val
+                    except AttributeError:
+                        rtn_dict[item_key] = conv_item
+                if rtn_dict:
+                    rtn[key] = rtn_dict
+            elif key == 'birthDate':
+                if not value:
+                    continue
+                conv = esutilities\
+                    .conv_to_age_range(esutilities
+                                       .conv_birthdate_to_age(
+                                        date_parse(value)))
+                if conv:
+                    rtn["age_range"] = conv
+            else:
+                try:
+                    conv = value.to_es()
+                    if conv:
+                        rtn[key] = conv
+                except AttributeError:
+                    if value:
+                        rtn[key] = value
+        return rtn
 
 

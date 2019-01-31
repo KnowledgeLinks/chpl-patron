@@ -2,9 +2,10 @@ import re
 
 from validate_email import validate_email
 from dateutil.parser import parse as date_parse
-
-from chplpatron import geosearch
-from chplpatron import sierra
+from requests.exceptions import ConnectionError
+from chplpatron import (geosearch,
+                        sierra,
+                        postaldb)
 from chplpatron.exceptions import *
 
 from .messages import InvalidMsgs
@@ -28,10 +29,18 @@ def validate_form(form):
     if not valid_postal['valid']:
         valid_postal['field'] = Flds.postal_code.frm
         errors.append(valid_postal)
-    valid = True
+    else:
+        if form.get(Flds.city.frm) in [None, ""]:
+            form[Flds.city.frm] = valid_postal['data']['city'][0]
+        if form.get(Flds.state.frm) in [None, ""]:
+            form[Flds.state.frm] = valid_postal['data']['state']
     try:
         py_date = date_parse(form.get(Flds.birthday.frm))
         form[Flds.birthday.frm] = py_date.strftime('%m/%d/%Y')
+        if py_date.year < 1900:
+            errors.append({"field": Flds.birthday.frm,
+                           "valid": False,
+                           "message": "Birth year less than 1900 is not allowed."})
     except:
         errors.append({"field": Flds.birthday.frm,
                        "valid": False,
@@ -90,18 +99,20 @@ def email_check(**kwargs):
     return rtn_msg
 
 
-def postal_code(**kwargs):
+def postal_code(zipcode, **kwargs):
     """ Checks the postal code
 
         request args:
             zipcode: the postal code to check
     """
 
-    postal_value = kwargs.get("zipcode", "")
+    postal_value = zipcode
     debug_on = kwargs.get("debug", False)
     valid = False
     message = "Enter all 5 digits"
     data = {"city": [], "state": ""}
+    if len(postal_value) > 5:
+        postal_value = postal_value[:5]
     if len(postal_value) == 5:
         try:
             locations = geosearch.get_postal_code(postal_value)
@@ -111,6 +122,15 @@ def postal_code(**kwargs):
             message = ""
         except InvalidPostalCode:
             message = InvalidMsgs.invalid_postal_code.value
+        except (AttributeError, ConnectionError):
+            try:
+                locations = postaldb.get_postal_code(postal_value)
+                valid = True
+                data['city'] = [ix.get('city') for ix in locations]
+                data['state'] = [ix.get("state") for ix in locations][0]
+                message = ""
+            except InvalidPostalCode:
+                message = InvalidMsgs.invalid_postal_code.value
     rtn_msg = {"valid": valid,
                "message": message,
                "data": data}
@@ -129,7 +149,11 @@ def boundary_check(**kwargs):
         return {"valid": False,
                 "message": "Missing fields {}"
                 .format(", ".join(REQ_BOUNDARY.difference(set(kwargs.keys()))))}
-    within = geosearch.check_address(**kwargs)
+    try:
+        within = geosearch.check_address(**kwargs)
+    except:
+        return {"valid": None,
+                "message": InvalidMsgs.not_able_to_check_boundary.value}
     message = "The address is within the library boundary"
     if not within:
         message = InvalidMsgs.not_within_boundary.value

@@ -69,10 +69,15 @@ def setup():
     POSTAL_DB_SETUP = True
 
 
-def get_locale_from_postal_code(postal_value):
-    """ Checks to see if the email address as has already been registered
-        request args:
-            g587-email: the email address to check
+POSTAL_KEYS = ['postal_code', 'city', 'state']
+
+
+def get_postal_code(postal_value):
+    """
+    looks up the postal_code in the database
+
+    request args:
+        postal_code: the postal code to look up
     """
     setup()
     postal = postal_value
@@ -88,9 +93,11 @@ def get_locale_from_postal_code(postal_value):
                              "FROM resources WHERE postal_code = ?",
                              (postal_value,)).fetchall()
         if len(cities) > 0:
-            return [dict(city) for city in cities]
+            locs = [dict(city) for city in cities]
+            if len(locs) > 0 and locs[0].get('city'):
+                return locs
     raise InvalidPostalCode(postal_value)
 
 
 if __name__ == '__main__':
-    print(get_locale_from_postal_code('81137'))
+    print(get_postal_code('81137'))

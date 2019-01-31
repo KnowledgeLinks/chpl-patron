@@ -31,15 +31,14 @@ class EsMappings:
     # es_settings = None
 
     def __init__(self, es_url=None, **kwargs):
-        if es_url:
+        if not es_url:
             es_url = config.ES_URL
         self.es_url = es_url
         self.es = Elasticsearch([es_url])
         self.mapping_url = '{0}/_mapping'.format(self.es_url)
 
-
     @classmethod
-    def get_rdf_es_idx_map(cls, idx_name, idx_obj):
+    def get_es_idx_map(cls, idx_name, idx_obj):
         """
         Returns an elasticsearch mapping for the specified index based off
         of the mapping defined by the class definition
@@ -169,7 +168,7 @@ class EsMappings:
 
     def get_es_mappings(self):
         """
-        Returns the mapping defitions presetn in elasticsearh
+        Returns the mapping definitions present in elasticsearch
         """
 
         es_mappings = json.loads(requests.get(self.mapping_url).text)

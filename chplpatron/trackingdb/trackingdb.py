@@ -6,9 +6,8 @@ __author__ = "Jeremy Nelson, Mike Stabile"
 import os
 import sqlite3
 
-from hashlib import sha512
-
 from chplpatron.exceptions import RegisteredEmailError
+from chplpatron.utilities.baseutilities import hash_email
 
 DB_NAME = "tracking-db.sqlite"
 TRACKING_DB_SETUP = None
@@ -49,14 +48,7 @@ def setup(func):
     return func
 
 
-def hash_email(email):
-    """
-    hashes the email for storing in the database
 
-    :param email:
-    :return: hashed email
-    """
-    return sha512(email.lower().strip().encode()).hexdigest()
 
 
 @setup
@@ -77,6 +69,8 @@ def add_registration(patron_id, email, location="unknown", boundary=-1):
            "VALUES (?,?,?,?);").format(REG_TBL)
 
     try:
+        if boundary is None:
+            boundary = -1
         cur.execute(qry, (hash_email(email),
                           patron_id,
                           location,

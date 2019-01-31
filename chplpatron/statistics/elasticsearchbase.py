@@ -100,15 +100,14 @@ class EsBase():
             lg.info("Finished Error logging")
         return result
 
-    def save(self, data, **kwargs):
+    def save(self, data, id_value=None, **kwargs):
         """
-        sends a passed in action_list to elasticsearch
+        sends a passed in item to elasticsearch
 
         args:
             data: that data dictionary to save
+            id_value: es id to use / None = auto
 
-        kwargs:
-            id: es id to use / None = auto
         """
 
         lg = logging.getLogger("%s.%s" % (self.ln, inspect.stack()[0][3]))
@@ -119,7 +118,7 @@ class EsBase():
         reset_index = kwargs.get("reset_index",self.reset_index)
         doc_type = kwargs.get("doc_type", self.doc_type)
         op_type = kwargs.get("op_type", self.op_type)
-        id_value = kwargs.get("id")
+
         id_field = kwargs.get("id_field")
         if id_field:
             id_value = data.get(id_field)

@@ -4,7 +4,7 @@ import chplpatron.sierra as sierra
 from chplpatron.exceptions import *
 
 
-class Test_get_token(unittest.TestCase):
+class TestGetToken(unittest.TestCase):
 
     def setUp(self):
         pass
@@ -17,7 +17,7 @@ class Test_get_token(unittest.TestCase):
         pass
 
 
-class Test_register(unittest.TestCase):
+class TestRegister(unittest.TestCase):
 
     def setUp(self):
         pass

@@ -1,6 +1,7 @@
 """
 Module for validating address information for a patron
 """
+import re
 import requests
 
 from chplpatron.exceptions import *
@@ -41,7 +42,12 @@ def get_postal_code(postal_code):
     :return: response json
     """
     url = POSTAL_CODE_CHECK_URL.format(postal_code)
-    response = requests.get(url)
+    try:
+        response = requests.get(url)
+    except requests.exceptions.ConnectionError:
+        raise RemoteApiError("Not able to connect to ARCGIS api")
+    # except Exception as e:
+    #     pass
     if response.status_code < 399:
         locs = [dict(zip(POSTAL_KEYS,
                          [part.strip()
@@ -54,14 +60,25 @@ def get_postal_code(postal_code):
     raise RemoteApiError(url, response)
 
 
-def update_city(city, postal_code, **kwargs):
+def update_city(postal_code, city="",  **kwargs):
     locations = get_postal_code(postal_code)
     for loc in locations:
-        if city.strip().lower() == loc['city'].lower():
+        if city.strip().lower() == loc['city'].lower() or city == "":
             kwargs['city'] = loc['city']
             kwargs['postal_code'] = postal_code
             return kwargs
     raise InvalidCity(city)
+
+
+def clean_street(street):
+    """
+    The ACRGIS does not like # symbol in the query
+    This function strips everything after the #
+
+    :param street:
+    :return:
+    """
+    return re.sub(r'#.*', "", street).strip()
 
 
 def get_geo_coords(address):
@@ -72,7 +89,10 @@ def get_geo_coords(address):
     :return: dict with keys ['x', 'y']
     """
 
-    url = GEO_FROM_ADDRESS_URL.format(**address)
+    url = GEO_FROM_ADDRESS_URL.format(street=clean_street(address['street']),
+                                      city=address['city'],
+                                      state=address['state'],
+                                      postal_code=address['postal_code'])
     response = requests.get(url)
     if response.status_code < 399:
         address.update(response.json().get('locations', [{}])[0]

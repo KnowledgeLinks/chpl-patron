@@ -125,8 +125,16 @@ def update_patron(patron, patron_id):
                                 json=patron.to_dict())
     if result.status_code != 204:
         raise PasswordError(result)
-        raise RemoteApiError(result)
     return True
+
+def get_all_patrons(modified=None):
+    """
+    Returns a list of all patrons
+    :param modified: Optional specify a modified date
+    :return:
+    """
+    result = APIS.patron(headers=get_headers()
+                         )
 
 
 def lookup_by_email(email_value=None):

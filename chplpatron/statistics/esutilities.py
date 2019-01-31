@@ -1,4 +1,47 @@
 import json
+import requests
+import pdb
+from datetime import date
+
+from chplpatron.utilities import (first,
+                                  get_dict_key)
+
+
+def conv_birthdate_to_age(birthdate):
+    """
+    Converts a
+    :param birthdate:
+    :return:
+    """
+    today = date.today()
+    return today.year - birthdate.year - (
+                (today.month, today.day) < (birthdate.month, birthdate.day))
+
+
+AGE_RANGES = [
+    (11, "Under 12 years old",),
+    (17, "12-17 years old",),
+    (24, "18-24 years old",),
+    (34, "25-34 years old",),
+    (44, "35-44 years old",),
+    (54, "45-54 years old",),
+    (64, "55-64 years old",),
+    (74, "65-74 years old",),
+    (2000, "75 years or older",)
+]
+
+
+def conv_to_age_range(age):
+    """
+    Converts an age to an age range
+
+    :param age:
+    :return:
+    """
+    for rng in AGE_RANGES:
+        if age <= rng[0]:
+            return rng[1]
+    return None
 
 
 def get_es_action_item(data_item, action_settings, es_type, id_field=None):
@@ -12,6 +55,10 @@ def get_es_action_item(data_item, action_settings, es_type, id_field=None):
     :param id_field:
     :return:
     """
+    try:
+        data_item.get('id')
+    except AttributeError:
+        pdb.set_trace()
 
     action_item = dict.copy(action_settings)
     if id_field is not None:
@@ -19,7 +66,7 @@ def get_es_action_item(data_item, action_settings, es_type, id_field=None):
         if id_val is not None:
             action_item['_id'] = id_val
     elif data_item.get('id'):
-        if data_item['id'].startswith("%s/" % action_settings['_index']):
+        if str(data_item['id']).startswith("%s/" % action_settings['_index']):
             action_item['_id'] = "/".join(data_item['id'].split("/")[2:])
         else:
             action_item['_id'] = data_item['id']
@@ -30,6 +77,7 @@ def get_es_action_item(data_item, action_settings, es_type, id_field=None):
     action_item['_type'] = es_type
     return action_item
 
+
 def mapping_ref(es_url):
     es_mappings = \
             json.loads(requests.get('{0}:9200/_mapping'.format(es_url)).text)
@@ -39,21 +87,12 @@ def mapping_ref(es_url):
     new_map = {}
     for key, value in es_mappings.items():
         for sub_key, sub_value in value.items():
-            new_map["/".join([key, sub_key])] = mapping_fields(sub_value['properties'
-            ])
+            new_map["/".join([key, sub_key])] = \
+                mapping_fields(sub_value['properties'])
     return new_map
 
+
 def mapping_fields(mapping, parent=[]):
-    # rtn_list = []
-    # for key, value in mapping.items():
-    #     new_key = parent + [key]
-    #     new_key = ".".join(new_key)
-    #     rtn_list.append((new_key, value.get('type')))
-    #     if value.get('properties'):
-    #         rtn_list += mapping_fields(value['properties'], [new_key])
-    #     elif value.get('fields'):
-    #         rtn_list += mapping_fields(value['fields'], [new_key])
-    # return rtn_list
     rtn_obj = {}
     for key, value in mapping.items():
         new_key = parent + [key]
@@ -65,6 +104,7 @@ def mapping_fields(mapping, parent=[]):
             rtn_obj.update(mapping_fields(value['fields'], [new_key]))
             rtn_obj[new_key] = [rtn_obj[new_key]] + list(value['fields'].keys())
     return rtn_obj
+
 
 def key_data_map(source, mapping, parent=[]):
     rtn_obj = {}
@@ -92,6 +132,7 @@ def key_data_map(source, mapping, parent=[]):
         # pdb.set_trace()
     return rtn_obj
 
+
 def sample_data_convert(es_url, data, es_index, doc_type):
     maps = mapping_ref(es_url)
     if data.get('hits'):
@@ -103,6 +144,7 @@ def sample_data_convert(es_url, data, es_index, doc_type):
                  for key, value in conv_data.items()]
     conv_data.sort(key=lambda tup: es_field_sort(tup[0]))
     return conv_data
+
 
 def sample_data_map(es_url):
 
@@ -118,6 +160,7 @@ def sample_data_map(es_url):
                          for key, value in conv_data.items()]
         rtn_obj[path].sort(key=lambda tup: es_field_sort(tup[0]))
     return rtn_obj
+
 
 def es_field_sort(fld_name):
     """ Used with lambda to sort fields """

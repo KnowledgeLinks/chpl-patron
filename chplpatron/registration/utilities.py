@@ -128,15 +128,6 @@ class Flds:
     password = FldSpec("password",
                        "g587-password",
                        "pin")
-# def convert(data, input, output):
-#     if input == "form":
-#         return form_convert(data, output)
-#     elif input == "db":
-#         return db_convert(data, output)
-#     elif input == "api":
-#         return api_convert(data, output)
-#
-#
 
 
 def form_to_api(form):
@@ -165,12 +156,13 @@ def form_to_api(form):
 
 
 def api_to_db(data):
-    pass
+    raise NotImplementedError
 
 
 def db_convert(data, output):
-    pass
+    raise NotImplementedError
 
 
 def api_convert(data, output):
-    pass
+    raise NotImplementedError
+
