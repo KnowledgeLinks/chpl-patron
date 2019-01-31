@@ -96,8 +96,10 @@ def get_postal_code(postal_value):
             locs = [dict(city) for city in cities]
             if len(locs) > 0 and locs[0].get('city'):
                 return locs
+            return [dict(city) for city in cities]
     raise InvalidPostalCode(postal_value)
 
 
 if __name__ == '__main__':
     print(get_postal_code('81137'))
+

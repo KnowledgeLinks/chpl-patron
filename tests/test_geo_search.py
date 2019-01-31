@@ -23,8 +23,7 @@ class TestGeoSearch(unittest.TestCase):
 
         self.test_address = {
             "city": "Carrboro",
-            "street": "500 smith level rd #e-21",
-            # "street": "500 smith level rd",
+            "street": "500 smith level rd",
             "state": "NC",
             "postal_code": "27510",
         }
@@ -34,7 +33,6 @@ class TestGeoSearch(unittest.TestCase):
             "postal_code": "27514",
             "street": "100 library dr"
         }
-
 
     def test_get_locale_from_postal_code(self):
         # self.assertGreater(len(geosearch.get_locale_from_postal_code(81137)),
@@ -59,6 +57,7 @@ class TestGeoSearch(unittest.TestCase):
                 self.out_boundary_address))
 
     def test_check_address(self):
+
         # valid = self.valid_address.copy()
         # del valid['x']
         # del valid['y']
@@ -66,6 +65,7 @@ class TestGeoSearch(unittest.TestCase):
         # self.assertFalse(geosearch.check_address(**self.out_boundary_address))
         print(geosearch.check_address(**self.test_address))
         print(geosearch.check_address(**self.test_address2))
+
     def tearDown(self):
         pass
 

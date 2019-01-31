@@ -104,10 +104,11 @@ def request_boundary_check(**kwargs):
 @app.route("/register/email_check")
 @crossdomain(origin=CROSS_DOMAIN_SITE)
 def request_email_check():
-    """ Checks to see if the email address as has already been registered 
+    """
+    Checks to see if the email address as has already been registered
 
-        request args:
-            g587-email: the email address to check
+    request args:
+        g587-email: the email address to check
     """
     try:
         rtn_msg = email_check(email=request.args.get(Flds.email.frm, ""),
@@ -148,7 +149,8 @@ def request_postal_code():
     except Exception as err:
         log.exception(err)
 
-#@app.route("/register", methods=["POST"])
+
+@app.route("/register/", methods=["POST"])
 @app.route("/register", methods=["POST"])
 @crossdomain(origin=CROSS_DOMAIN_SITE)
 def index():
@@ -217,16 +219,16 @@ def index():
                                                      "Patron"))})
 
 
-#@app.route("/test_form", methods=['GET', 'POST'])
-#@crossdomain(origin=CROSS_DOMAIN_SITE)
-def test_form():
-    form_path = os.path.join(os.path.abspath("../../"),
-                             "wordpress",
-                             "currentform.txt")
-    # html = ""
-    with open(form_path, "r") as form_file:
-        html = form_file.read()
-    return html.replace("104.131.189.93", "localhost")
+# @app.route("/test_form", methods=['GET', 'POST'])
+# @crossdomain(origin=CROSS_DOMAIN_SITE)
+# def test_form():
+#     form_path = os.path.join(os.path.abspath("../../"),
+#                              "wordpress",
+#                              "currentform.txt")
+#     # html = ""
+#     with open(form_path, "r") as form_file:
+#         html = form_file.read()
+#     return html.replace("104.131.189.93", "localhost")
 
 
 @app.route("/register/statistics", methods=['GET', 'POST'])
@@ -240,31 +242,31 @@ def statistics():
         html = form_file.read()
     return html.replace("104.131.189.93", "localhost")
 
-#@app.route("/register", methods=["GET"])
-#def test_routing():
+# @app.route("/register", methods=["GET"])
+# def test_routing():
 #    return jsonify({"app": "running"})
 
-#@app.route("/database", methods=['GET'])
-#@crossdomain(origin=CROSS_DOMAIN_SITE)
-def database_data():
-    template = ("<html>"
-                "<body>"
-                "<h1>Database data</h1>"
-                "<table>"
-                "<tr>{header_row}</tr>"
-                "{data_rows}"
-                "</table>"
-                "</body>"
-                "</html>")
-    # trackingdb.trackingdb.load_old_d
-
-    header_row = "".join(["<th>{}</th>".format(item)
-                          for item in trackingdb.columns()])
-    data_rows = "\n".join(["<tr><td>{}</td></tr>"
-                           .format("</td><td>".join([str(i) for i in item]))
-                           for item in trackingdb.get_data()])
-    return template.format(header_row=header_row,
-                           data_rows=data_rows)
+# @app.route("/database", methods=['GET'])
+# @crossdomain(origin=CROSS_DOMAIN_SITE)
+# def database_data():
+#     template = ("<html>"
+#                 "<body>"
+#                 "<h1>Database data</h1>"
+#                 "<table>"
+#                 "<tr>{header_row}</tr>"
+#                 "{data_rows}"
+#                 "</table>"
+#                 "</body>"
+#                 "</html>")
+#     # trackingdb.trackingdb.load_old_d
+#
+#     header_row = "".join(["<th>{}</th>".format(item)
+#                           for item in trackingdb.columns()])
+#     data_rows = "\n".join(["<tr><td>{}</td></tr>"
+#                            .format("</td><td>".join([str(i) for i in item]))
+#                            for item in trackingdb.get_data()])
+#     return template.format(header_row=header_row,
+#                            data_rows=data_rows)
 
 
 @app.route("/register/statistics/reg_by_month")

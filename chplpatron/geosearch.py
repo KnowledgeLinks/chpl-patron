@@ -1,6 +1,7 @@
 """
 Module for validating address information for a patron
 """
+
 import re
 import requests
 
@@ -8,15 +9,6 @@ from chplpatron.exceptions import *
 
 POSTAL_CODE_CHECK_URL = ("https://geocode.arcgis.com/arcgis/rest/services/"
                          "World/GeocodeServer/find?text={}&f=pjson")
-
-# POSTAL_CODE_CHECK_URL = ("http://production.shippingapis.com/ShippingAPI.dll"
-#                          "?API=CityStateLookup&XML=<CityStateLookupRequest%20"
-#                          "USERID=\"{user_id}\">"
-#                          "<ZipCode ID= \"0\">"
-#                          "<Zip5>{postal_code}</Zip5>"
-#                          "</ZipCode></CityStateLookupRequest>").format(
-#                          user_id=instance.USPS_USER_ID,
-#                          postal_code="{}")
 
 POSTAL_KEYS = ['postal_code', 'city', 'state']
 
@@ -42,6 +34,7 @@ def get_postal_code(postal_code):
     :return: response json
     """
     url = POSTAL_CODE_CHECK_URL.format(postal_code)
+
     try:
         response = requests.get(url)
     except requests.exceptions.ConnectionError:
@@ -93,6 +86,7 @@ def get_geo_coords(address):
                                       city=address['city'],
                                       state=address['state'],
                                       postal_code=address['postal_code'])
+
     response = requests.get(url)
     if response.status_code < 399:
         address.update(response.json().get('locations', [{}])[0]

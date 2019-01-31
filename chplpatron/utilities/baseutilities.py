@@ -10,6 +10,7 @@ import re
 import pprint
 import json
 from collections.abc import Mapping
+
 from hashlib import sha512
 
 __author__ = "Mike Stabile, Jeremy Nelson"
@@ -508,6 +509,7 @@ def first(item):
         return {} if not item else item[0]
     return {}
 
+
 def hash_email(email):
     """
     hashes the email for storing in the database
@@ -516,3 +518,4 @@ def hash_email(email):
     :return: hashed email
     """
     return sha512(email.lower().strip().encode()).hexdigest()
+

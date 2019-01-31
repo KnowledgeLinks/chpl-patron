@@ -6,8 +6,12 @@ __author__ = "Jeremy Nelson, Mike Stabile"
 import os
 import sqlite3
 
+
 from chplpatron.exceptions import RegisteredEmailError
 from chplpatron.utilities.baseutilities import hash_email
+
+from hashlib import sha512
+
 
 DB_NAME = "tracking-db.sqlite"
 TRACKING_DB_SETUP = None
@@ -46,9 +50,6 @@ def setup(func):
     con.close()
     TRACKING_DB_SETUP = True
     return func
-
-
-
 
 
 @setup

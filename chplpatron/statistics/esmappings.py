@@ -169,6 +169,7 @@ class EsMappings:
     def get_es_mappings(self):
         """
         Returns the mapping definitions present in elasticsearch
+
         """
 
         es_mappings = json.loads(requests.get(self.mapping_url).text)

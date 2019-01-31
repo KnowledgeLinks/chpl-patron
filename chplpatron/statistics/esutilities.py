@@ -55,6 +55,7 @@ def get_es_action_item(data_item, action_settings, es_type, id_field=None):
     :param id_field:
     :return:
     """
+
     try:
         data_item.get('id')
     except AttributeError:
@@ -87,6 +88,7 @@ def mapping_ref(es_url):
     new_map = {}
     for key, value in es_mappings.items():
         for sub_key, sub_value in value.items():
+
             new_map["/".join([key, sub_key])] = \
                 mapping_fields(sub_value['properties'])
     return new_map

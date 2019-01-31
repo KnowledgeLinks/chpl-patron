@@ -2,10 +2,12 @@ import re
 
 from validate_email import validate_email
 from dateutil.parser import parse as date_parse
+
 from requests.exceptions import ConnectionError
 from chplpatron import (geosearch,
                         sierra,
                         postaldb)
+
 from chplpatron.exceptions import *
 
 from .messages import InvalidMsgs
@@ -131,6 +133,7 @@ def postal_code(zipcode, **kwargs):
                 message = ""
             except InvalidPostalCode:
                 message = InvalidMsgs.invalid_postal_code.value
+
     rtn_msg = {"valid": valid,
                "message": message,
                "data": data}

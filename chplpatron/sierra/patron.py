@@ -1,5 +1,6 @@
 import json
 import pdb
+
 from dateutil.parser import parse as date_parse
 from chplpatron.statistics import esutilities
 from chplpatron.utilities.baseutilities import hash_email
@@ -431,5 +432,6 @@ class Patron(SierraObject):
                     if value:
                         rtn[key] = value
         return rtn
+
 
 

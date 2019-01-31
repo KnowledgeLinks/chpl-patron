@@ -118,7 +118,6 @@ class EsBase():
         reset_index = kwargs.get("reset_index",self.reset_index)
         doc_type = kwargs.get("doc_type", self.doc_type)
         op_type = kwargs.get("op_type", self.op_type)
-
         id_field = kwargs.get("id_field")
         if id_field:
             id_value = data.get(id_field)

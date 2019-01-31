@@ -1,5 +1,8 @@
 instance/
+<<<<<<< HEAD
 *.json
+=======
+>>>>>>> 77beb323f0817dfbe6848c1774dda536f3f3500b
 *.log
 *.idea/
 *.swp

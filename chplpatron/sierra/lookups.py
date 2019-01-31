@@ -68,7 +68,6 @@ class PatronFlds(Enum):
         """
         return ",".join([fld.name for fld in cls])
 
-
 class ApiSpec:
     """
     Specifications for an API endpoint
@@ -91,7 +90,6 @@ class ApiUrls(Enum):
     Enumeration of available API endpoints and ApiSpecs
     """
     create_patron = ApiSpec("patrons", ReqMethods.post)
-
     patron_update = ApiSpec("patrons/{}",
                             ReqMethods.put)
     patron_get = ApiSpec("patrons/{}",
@@ -244,6 +242,7 @@ class ApiCaller:
                 params = "&".join(["{}={}"
                                   .format(key,
                                           urllib.parse.quote_plus(str(value)))
+
                                    for key, value in self.params.items()])
             else:
                 if self.key and not self.key_val:
