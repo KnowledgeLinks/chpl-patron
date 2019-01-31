@@ -81,7 +81,7 @@ CROSS_DOMAIN_SITE = "https://chapelhillpubliclibrary.org" \
 basestring = (str, bytes)
 
 
-@app.route("/boundary_check")
+@app.route("/register/boundary_check")
 @crossdomain(origin=CROSS_DOMAIN_SITE)
 def request_boundary_check(**kwargs):
     """
@@ -101,7 +101,7 @@ def request_boundary_check(**kwargs):
         log.exception(err)
 
 
-@app.route("/email_check")
+@app.route("/register/email_check")
 @crossdomain(origin=CROSS_DOMAIN_SITE)
 def request_email_check():
     """ Checks to see if the email address as has already been registered 
@@ -119,7 +119,7 @@ def request_email_check():
         log.exception(err)
 
 
-@app.route("/validate_password")
+@app.route("/register/validate_password")
 @crossdomain(origin=CROSS_DOMAIN_SITE)
 def request_validate_password():
     """
@@ -134,7 +134,7 @@ def request_validate_password():
         log.exception(err)
 
 
-@app.route("/postal_code")
+@app.route("/register/postal_code")
 @crossdomain(origin=CROSS_DOMAIN_SITE)
 def request_postal_code():
     """
@@ -148,8 +148,8 @@ def request_postal_code():
     except Exception as err:
         log.exception(err)
 
+#@app.route("/register", methods=["POST"])
 @app.route("/register", methods=["POST"])
-@app.route("/", methods=["POST"])
 @crossdomain(origin=CROSS_DOMAIN_SITE)
 def index():
     """
@@ -217,8 +217,8 @@ def index():
                                                      "Patron"))})
 
 
-@app.route("/test_form", methods=['GET', 'POST'])
-@crossdomain(origin=CROSS_DOMAIN_SITE)
+#@app.route("/test_form", methods=['GET', 'POST'])
+#@crossdomain(origin=CROSS_DOMAIN_SITE)
 def test_form():
     form_path = os.path.join(os.path.abspath("../../"),
                              "wordpress",
@@ -229,7 +229,7 @@ def test_form():
     return html.replace("104.131.189.93", "localhost")
 
 
-@app.route("/statistics", methods=['GET', 'POST'])
+@app.route("/register/statistics", methods=['GET', 'POST'])
 @crossdomain(origin=CROSS_DOMAIN_SITE)
 def statistics():
     form_path = os.path.join(os.path.abspath("../../"),
@@ -240,9 +240,12 @@ def statistics():
         html = form_file.read()
     return html.replace("104.131.189.93", "localhost")
 
+#@app.route("/register", methods=["GET"])
+#def test_routing():
+#    return jsonify({"app": "running"})
 
-@app.route("/database", methods=['GET'])
-@crossdomain(origin=CROSS_DOMAIN_SITE)
+#@app.route("/database", methods=['GET'])
+#@crossdomain(origin=CROSS_DOMAIN_SITE)
 def database_data():
     template = ("<html>"
                 "<body>"
@@ -264,7 +267,7 @@ def database_data():
                            data_rows=data_rows)
 
 
-@app.route("/statistics/reg_by_month")
+@app.route("/register/statistics/reg_by_month")
 @crossdomain(origin=CROSS_DOMAIN_SITE)
 def reg_by_month():
     data = trackingdb.registration_by_month()
