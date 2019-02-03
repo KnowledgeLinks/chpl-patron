@@ -64,7 +64,7 @@ class TestPostalCheck(unittest.TestCase):
         pass
 
     def test_postal_code(self):
-        print(validation.postal_code("22308"))
+        self.assertTrue(validation.postal_code("22308")['valid'])
 
 
 class TestBoundaryCheck(unittest.TestCase):
@@ -86,7 +86,7 @@ class TestBoundaryCheck(unittest.TestCase):
 
         self.test_address = {
             "city": "Carrboro",
-            "street": "500 smith level rd #e-21",
+            "street": "400 smith level rd #e-21",
             # "street": "500 smith level rd",
             "state": "NC",
             "postal_code": "27510",
@@ -99,13 +99,13 @@ class TestBoundaryCheck(unittest.TestCase):
         }
 
     def test_boundary_within(self):
-        print(validation.boundary_check(**self.valid_address))
+        self.assertTrue(validation.boundary_check(**self.valid_address)['valid'])
 
     def test_bounday_not_within(self):
-        print(validation.boundary_check(**self.out_boundary_address))
+        self.assertFalse(validation.boundary_check(**self.out_boundary_address)['valid'])
 
     def test_unable_to_determine(self):
-        print(validation.boundary_check(**self.bad_address))
+        self.assertIsNone(validation.boundary_check(**self.bad_address)['valid'])
 
 
 if __name__ == '__main__':

@@ -4,8 +4,10 @@ Module for validating address information for a patron
 
 import re
 import requests
+import urllib
 
 from chplpatron.exceptions import *
+from chplpatron.utilities import urlencode_dict
 
 POSTAL_CODE_CHECK_URL = ("https://geocode.arcgis.com/arcgis/rest/services/"
                          "World/GeocodeServer/find?text={}&f=pjson")
@@ -82,10 +84,11 @@ def get_geo_coords(address):
     :return: dict with keys ['x', 'y']
     """
 
-    url = GEO_FROM_ADDRESS_URL.format(street=clean_street(address['street']),
-                                      city=address['city'],
-                                      state=address['state'],
-                                      postal_code=address['postal_code'])
+    # url = GEO_FROM_ADDRESS_URL.format(street=clean_street(address['street']),
+    #                                   city=address['city'],
+    #                                   state=address['state'],
+    #                                   postal_code=address['postal_code'])
+    url = GEO_FROM_ADDRESS_URL.format(**urlencode_dict(address))
 
     response = requests.get(url)
     if response.status_code < 399:

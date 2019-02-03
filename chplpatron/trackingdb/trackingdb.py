@@ -10,8 +10,6 @@ import sqlite3
 from chplpatron.exceptions import RegisteredEmailError
 from chplpatron.utilities.baseutilities import hash_email
 
-from hashlib import sha512
-
 
 DB_NAME = "tracking-db.sqlite"
 TRACKING_DB_SETUP = None
@@ -78,10 +76,10 @@ def add_registration(patron_id, email, location="unknown", boundary=-1):
                           int(boundary),))
         con.commit()
     except sqlite3.IntegrityError:
-        pass
-        # cur.close()
-        # con.close()
-        # raise RegisteredEmailError(email)
+        # pass
+        cur.close()
+        con.close()
+        raise RegisteredEmailError(email)
     cur.close()
     con.close()
     return True

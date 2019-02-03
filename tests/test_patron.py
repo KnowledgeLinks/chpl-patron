@@ -24,7 +24,7 @@ class TestPatron(unittest.TestCase):
     #     p = patron.to_dict()
     #     pprint.pprint(p)
 
-
+    @unittest.skip("do not want to create a patron")
     def test_create_patron(self):
         # id = sierra.lookup_by_name("Ztesta, Joe").get('id')
         sierra.delete_patron(id)
@@ -49,9 +49,7 @@ class TestPatron(unittest.TestCase):
         var_field.content = "test message"
         patron.varFields = var_field
         p = patron.to_dict()
-        pprint.pprint(p)
         result = sierra.create_patron(patron)
-        pprint.pprint(result)
 
 
 if __name__ == '__main__':

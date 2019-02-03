@@ -9,6 +9,8 @@ import copy
 import re
 import pprint
 import json
+import urllib.parse
+
 from collections.abc import Mapping
 
 from hashlib import sha512
@@ -134,7 +136,7 @@ def make_set(value):
     if isinstance(value, list):
         value = set(value)
     elif not isinstance(value, set):
-        value = set([value,])
+        value = set([value])
     return value
 
 
@@ -519,3 +521,17 @@ def hash_email(email):
     """
     return sha512(email.lower().strip().encode()).hexdigest()
 
+
+def urlencode_dict(item):
+    """
+    Url encodes every item in a dictionary 1 level deep return a copy of the dictionay
+    :param item: dictionay to encode
+    :return:
+    """
+    rtn = {}
+    for key, value in item.items():
+        try:
+            rtn[key] = urllib.parse.quote_plus(value)
+        except TypeError:
+            rtn[key] = value
+    return rtn

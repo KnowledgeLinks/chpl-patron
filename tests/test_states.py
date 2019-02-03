@@ -4,7 +4,7 @@ from chplpatron.postaldb import states
 from chplpatron.exceptions import InvalidState
 
 
-class Test_States(unittest.TestCase):
+class TestStates(unittest.TestCase):
 
     def setUp(self):
         pass

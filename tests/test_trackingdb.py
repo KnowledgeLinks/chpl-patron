@@ -5,7 +5,7 @@ from chplpatron import trackingdb
 from chplpatron.exceptions import RegisteredEmailError
 
 
-class Test_TrackingDb(unittest.TestCase):
+class TestTrackingDb(unittest.TestCase):
     test_email = "testemail@gmail.com"
 
     def setUp(self):

@@ -1,7 +1,7 @@
 import unittest
-import chplpatron.sierra as sierra
+
 import datetime
-from chplpatron.exceptions import *
+
 from chplpatron.statistics import esutilities
 
 

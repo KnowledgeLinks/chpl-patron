@@ -6,9 +6,9 @@ from chplpatron.statistics import (esmappings,
 import chplpatron.sierra as sierra
 from chplpatron.exceptions import *
 import json
-import pdb
 
 
+@unittest.skip
 class TestConvertToEs(unittest.TestCase):
 
     def setUp(self):
@@ -28,6 +28,7 @@ class TestConvertToEs(unittest.TestCase):
         pass
 
 
+@unittest.skip
 class TestEsSetup(unittest.TestCase):
 
     def setUp(self):
@@ -66,6 +67,7 @@ class TestEsSetup(unittest.TestCase):
         pass
 
 
+@unittest.skip
 class TestEsRecordLoad(unittest.TestCase):
 
     def setUp(self):

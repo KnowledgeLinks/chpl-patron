@@ -2,7 +2,7 @@ import base64
 import requests
 import instance
 import datetime
-
+import pprint
 from chplpatron.exceptions import (RemoteApiError,
                                    RegisteredEmailError,
                                    PasswordError,
@@ -123,6 +123,7 @@ def update_patron(patron, patron_id):
     result = APIS.patron_update(patron_id,
                                 headers=get_headers(),
                                 json=patron.to_dict())
+    pprint.pprint(result.text)
     if result.status_code != 204:
         raise PasswordError(result)
     return True

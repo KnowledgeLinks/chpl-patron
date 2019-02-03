@@ -3,7 +3,7 @@ Module providing lookup type information, i.e. urls, field names and
 associated functions and classes
 """
 
-import urllib
+import urllib.parse
 import requests
 
 from enum import Enum
@@ -67,6 +67,7 @@ class PatronFlds(Enum):
         :return: a comma separated list of all fields
         """
         return ",".join([fld.name for fld in cls])
+
 
 class ApiSpec:
     """
@@ -179,6 +180,8 @@ class ApiCaller:
         self.headers = headers
         req_kwargs = self.make_req_kwargs(**kwargs)
         url = self.format_url()
+        if kwargs.get("test"):
+            return url
         return self.method(url, **req_kwargs)
 
     def make_req_kwargs(self, **kwargs):
@@ -235,10 +238,6 @@ class ApiCaller:
             elif isinstance(self.params, dict):
                 if self.key and not self.key_val:
                     self.key_val = self.params.pop("key")
-                p_s = []
-                # for key, value in self.params.items():
-                #     p_s.append("{}={}".format(key,
-                #                               urllib.parse.quote_plus(str(value))))
                 params = "&".join(["{}={}"
                                   .format(key,
                                           urllib.parse.quote_plus(str(value)))

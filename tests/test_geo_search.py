@@ -23,7 +23,7 @@ class TestGeoSearch(unittest.TestCase):
 
         self.test_address = {
             "city": "Carrboro",
-            "street": "500 smith level rd",
+            "street": "400 smith level rd #1234",
             "state": "NC",
             "postal_code": "27510",
         }
@@ -58,13 +58,13 @@ class TestGeoSearch(unittest.TestCase):
 
     def test_check_address(self):
 
-        # valid = self.valid_address.copy()
-        # del valid['x']
-        # del valid['y']
-        # self.assertTrue(geosearch.check_address(**valid))
-        # self.assertFalse(geosearch.check_address(**self.out_boundary_address))
-        print(geosearch.check_address(**self.test_address))
-        print(geosearch.check_address(**self.test_address2))
+        valid = self.valid_address.copy()
+        del valid['x']
+        del valid['y']
+        self.assertTrue(geosearch.check_address(**valid))
+        self.assertFalse(geosearch.check_address(**self.out_boundary_address))
+        self.assertTrue(geosearch.check_address(**self.test_address))
+        self.assertTrue(geosearch.check_address(**self.test_address2))
 
     def tearDown(self):
         pass

@@ -4,7 +4,7 @@ from chplpatron import postaldb
 from chplpatron.exceptions import *
 
 
-class TestGeoSearch(unittest.TestCase):
+class TestPostalCodeDb(unittest.TestCase):
 
     def setUp(self):
         self.valid_address = {'street': '100 Library Drive',

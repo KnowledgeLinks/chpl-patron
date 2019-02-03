@@ -17,6 +17,7 @@ class TestGetToken(unittest.TestCase):
         pass
 
 
+@unittest.skip
 class TestRegister(unittest.TestCase):
 
     def setUp(self):
@@ -41,13 +42,12 @@ class TestCheckEmail(unittest.TestCase):
                           sierra.check_email,
                           "stabilemichael@hotmail.com")
         self.assertTrue(sierra.check_email("not_reg_email@gmail.com"))
-        # temp card number 353980
-        pprint.pprint(sierra.lookup_by_email("stabilemichael@hotmail.com"))
 
     def tearDown(self):
         pass
 
 
+@unittest.skip
 class TestFindByName(unittest.TestCase):
 
     def setUp(self):
@@ -55,13 +55,13 @@ class TestFindByName(unittest.TestCase):
 
     def test_lookup_name(self):
         result = sierra.lookup_by_name("Ztestd, Jess")
-        # sierra.set_email("m@m.com", result['id'])
         pprint.pprint(result)
 
     def tearDown(self):
         pass
 
 
+@unittest.skip
 class TestSetEmail(unittest.TestCase):
 
     def setUp(self):
@@ -78,12 +78,13 @@ class TestSetEmail(unittest.TestCase):
         pass
 
 
+@unittest.skip
 class TestSetMessages(unittest.TestCase):
 
     def setUp(self):
         pass
 
-    def test_lookup_name(self):
+    def test_set_message(self):
         msg = sierra.VarField()
         msg.fieldTag = "m"
         msg.content = "Not in boundary message"
@@ -144,13 +145,13 @@ class TestFindById(unittest.TestCase):
 
     def test_lookup_id(self):
         result = sierra.lookup_by_id(354316)
-
-        pprint.pprint(result)
+        self.assertTrue(result.get('deletedDate') is not None)
 
     def tearDown(self):
         pass
 
 
+@unittest.skip
 class TestSetters(unittest.TestCase):
 
     def setUp(self):
