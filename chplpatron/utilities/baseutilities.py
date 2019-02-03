@@ -10,6 +10,7 @@ import re
 import pprint
 import json
 import urllib.parse
+from datetime import date
 
 from collections.abc import Mapping
 
@@ -535,3 +536,39 @@ def urlencode_dict(item):
         except TypeError:
             rtn[key] = value
     return rtn
+
+def conv_birthdate_to_age(birthdate):
+    """
+    Converts a
+    :param birthdate:
+    :return:
+    """
+    today = date.today()
+    return today.year - birthdate.year - (
+                (today.month, today.day) < (birthdate.month, birthdate.day))
+
+
+AGE_RANGES = [
+    (11, "Under 12 years old",),
+    (17, "12-17 years old",),
+    (24, "18-24 years old",),
+    (34, "25-34 years old",),
+    (44, "35-44 years old",),
+    (54, "45-54 years old",),
+    (64, "55-64 years old",),
+    (74, "65-74 years old",),
+    (2000, "75 years or older",)
+]
+
+
+def conv_to_age_range(age):
+    """
+    Converts an age to an age range
+
+    :param age:
+    :return:
+    """
+    for rng in AGE_RANGES:
+        if age <= rng[0]:
+            return rng[1]
+    return None

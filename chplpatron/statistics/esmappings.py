@@ -10,7 +10,8 @@ import elasticsearch.exceptions as es_except
 from elasticsearch import Elasticsearch
 from instance import config
 
-import chplpatron.sierra as sierra
+from chplpatron import sierra
+# import chplpatron.sierra as sierra
 
 
 MODULE = __import__(__name__)

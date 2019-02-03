@@ -2,7 +2,7 @@ import json
 import pdb
 
 from dateutil.parser import parse as date_parse
-from chplpatron.statistics import esutilities
+from chplpatron import utilities
 from chplpatron.utilities.baseutilities import hash_email
 
 DO_NOT_INDEX = "DO_NOT_INDEX"
@@ -417,8 +417,8 @@ class Patron(SierraObject):
             elif key == 'birthDate':
                 if not value:
                     continue
-                conv = esutilities\
-                    .conv_to_age_range(esutilities
+                conv = utilities\
+                    .conv_to_age_range(utilities
                                        .conv_birthdate_to_age(
                                         date_parse(value)))
                 if conv:
