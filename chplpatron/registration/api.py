@@ -151,7 +151,7 @@ def request_postal_code():
 
 
 @app.route("/register", methods=["POST"])
-@app.route("/register/", methods=["POST"])
+# @app.route("/register/", methods=["POST"])
 @crossdomain(origin=CROSS_DOMAIN_SITE)
 def index():
     """
@@ -162,6 +162,7 @@ def index():
         if not request.method.startswith("POST"):
             return "Method not supported"
         form = request.form.to_dict()
+        testing = testing_mode(form)
         valid_form = validate_form(form)
 
         if valid_form['valid']:
@@ -176,9 +177,11 @@ def index():
                        and request.remote_addr.startswith(config.INTERNAL_IP) \
                        else "external"
             try:
-                temp_card_number = register_patron(valid_form['form'],
-                                                   location,
-                                                   boundary)
+                temp_card_number = "testing"
+                if not testing:
+                    temp_card_number = register_patron(valid_form['form'],
+                                                       location,
+                                                       boundary)
                 if temp_card_number is not None:
                     if location == "internal":
                         success_uri = config.INTERNAL_SUCCESS
@@ -229,6 +232,11 @@ def index():
 #     with open(form_path, "r") as form_file:
 #         html = form_file.read()
 #     return html.replace("104.131.189.93", "localhost")
+def testing_mode(form):
+    try:
+        return form.pop("testing")
+    except KeyError:
+        return False
 
 
 @app.route("/register/statistics", methods=['GET', 'POST'])
