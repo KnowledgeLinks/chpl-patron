@@ -171,9 +171,13 @@ def validate_password(password):
     :param password: the password to validate
     :return:
     """
-    if re.findall(r'[^a-zA-Z0-9]', password) or len(password) > 30:
-        return {"valid": False,
-                "message": InvalidMsgs.password.value}
+    failed = {"valid": False,
+              "message": InvalidMsgs.password.value}
+    try:
+        if re.findall(r'[^a-zA-Z0-9]', password) or len(password) > 30:
+            return failed
+    except TypeError:
+        return failed
     return {"valid": True,
             "message": ""}
 

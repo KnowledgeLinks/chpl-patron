@@ -4,6 +4,7 @@ __author__ = "Jeremy Nelson, Mike Stabile"
 import os
 import sys
 import logging
+import pprint
 
 from logging.handlers import RotatingFileHandler
 
@@ -160,7 +161,9 @@ def index():
     try:
         if not request.method.startswith("POST"):
             return "Method not supported"
+        pprint.pprint(request)
         form = request.form.to_dict()
+        pprint.pprint(form)
         testing = testing_mode(form)
         valid_form = validate_form(form)
 
@@ -190,7 +193,7 @@ def index():
                                     "url": "{}?number={}&boundary={}".format(
                                           success_uri,
                                           temp_card_number,
-                                          boundary['valid'])})
+                                          str(boundary['valid']).lower())})
             except exceptions.PasswordError as p_err:
                 # log.exception(p_err)
                 error_obj = {"field": Flds.password.frm,
@@ -231,6 +234,8 @@ def index():
 #     with open(form_path, "r") as form_file:
 #         html = form_file.read()
 #     return html.replace("104.131.189.93", "localhost")
+
+
 def testing_mode(form):
     try:
         return form.pop("testing")
@@ -293,5 +298,5 @@ if __name__ == '__main__':
     print("Starting Chapel Hills Patron Registration")
 
     # app.run(host='0.0.0.0', port=8443, debug=True)
-    app.run(host='0.0.0.0', port=8443, debug=True, ssl_context=context)
+    app.run(host='0.0.0.0', port=8443, debug=False, ssl_context=context)
 
