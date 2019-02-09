@@ -151,7 +151,7 @@ def request_postal_code():
 
 
 @app.route("/register", methods=["POST"])
-@app.route("/register/", methods=["POST"])
+#@app.route("/register/", methods=["POST"])
 @crossdomain(origin=CROSS_DOMAIN_SITE)
 def index():
     """
