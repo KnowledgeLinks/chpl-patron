@@ -132,13 +132,13 @@ class Flds:
 
 def form_to_api(form):
     patron = Patron()
-    patron.names = "{0}, {1}".format(form.get(Flds.last_name.frm),
-                                     form.get(Flds.first_name.frm))
+    patron.names = "{0}, {1}".format(form.get(Flds.last_name.frm).upper(),
+                                     form.get(Flds.first_name.frm).upper())
     patron.birthDate = date_parse(form.get(Flds.birthday.frm))\
         .strftime("%Y-%m-%d")
     address = Address()
     address.type = "a"
-    address.lines = [form.get(Flds.street.frm),
+    address.lines = [form.get(Flds.street.frm).upper(),
                      "{city} {state} {postal_code}"
                      .format(city=form.get(Flds.city.frm).upper(),
                              state=form.get(Flds.state.frm).upper(),

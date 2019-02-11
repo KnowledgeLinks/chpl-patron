@@ -4,7 +4,7 @@ import string
 import random
 import pprint
 import json
-from chplpatron.registration.utilities import Flds
+from chplpatron.registration.utilities import Flds, form_to_api
 
 
 def random_email():
@@ -73,6 +73,17 @@ class TestLiveApi(unittest.TestCase):
         headers = {'User-Agent': 'Mozilla/5.0'}
         result = session.post(self.base_url[:-1], headers=headers, data=valid_in_boundary_form)
         self.assertTrue("boundary=true" in result.json().get("url", ""))
+
+    def test_uppercase(self):
+        valid_in_boundary_form = self.valid_form_base.copy()
+        valid_in_boundary_form.update(self.valid_address)
+        form = form_to_api(valid_in_boundary_form)
+        for addr in form.addresses:
+            for line in addr.lines:
+                self.assertTrue(line.isupper())
+        for name in form.names:
+            self.assertTrue(name.isupper())
+
 
     def tearDown(self):
         pass
