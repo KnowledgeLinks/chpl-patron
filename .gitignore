@@ -3,3 +3,7 @@ instance/
 *.sqlite
 __pycache__*
 nohup.*
+chplpatron/
+.idea/
+logging/
+tests/

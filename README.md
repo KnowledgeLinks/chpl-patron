@@ -22,6 +22,9 @@ the following variables set:
 
     ERROR_URI = Redirect URL to a Wordpress Page for a failed registration
 
+    DUPLICATE_EMAIL_CHECK = Set to 'True' to disallow duplicate email registrations
+
+
 Install Python 3.5 dependencies using `pip3 install -r requirements.txt`.
  
 ## Development

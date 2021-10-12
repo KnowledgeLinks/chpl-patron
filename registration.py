@@ -3,7 +3,6 @@ __author__ = "Jeremy Nelson, Mike Stabile"
 
 import csv
 import os
-import pdb
 import re
 import requests
 import smtplib
@@ -19,6 +18,9 @@ from functools import update_wrapper
 
 app = Flask(__name__, instance_relative_config=True)
 app.config.from_pyfile("config.py")
+
+# determine if duplicate emails should be checked
+DUPLICATE_EMAIL_CHECK = app.config.get("DUPLICATE_EMAIL_CHECK")
 
 CURRENT_DIR = os.path.abspath(os.curdir)
 DB_PATH = app.config.get("DB_PATH")
@@ -71,18 +73,37 @@ def crossdomain(origin=None, methods=None, headers=None,
         return update_wrapper(wrapped_function, f)
     return decorator
 
-def setup_db():
-    """ checks to see if the database is setup and sets if up if it doesn't"""
 
+def setup_db():
+    """ checks to see if the database is setup and sets it up if it does not exist"""
     if not os.path.exists(DB_PATH):
-        con = sqlite3.connect(DB_PATH)
-        cur = con.cursor()
-        with open(os.path.join(CURRENT_DIR, "db-schema.sql")) as script_fo:
-            script = script_fo.read()
-            cur.executescript(script)
-        cur.close()
-        con.close()
+        run_sql("db-schema.sql")
         setup_postalcodes()
+    # update the database schema if needed to remove the unique email constraint
+    db_updated_query = "SELECT name FROM sqlite_master WHERE type='table' AND name='old_LibraryCardRequest'";
+    con = sqlite3.connect(DB_PATH)
+    cur =  con.cursor()
+    exists = len(cur.execute(db_updated_query).fetchall()) > 0
+    cur.close()
+    con.close()
+    if not exists:
+        run_sql("db-remove-unique-email-constraint.sql")
+    
+
+def run_sql(filename):
+    """Runs the SQL found in the file
+
+    args:
+        filename: the name of the sql file to run
+    """
+    con = sqlite3.connect(DB_PATH)
+    cur = con.cursor()
+    with open(os.path.join(CURRENT_DIR, filename)) as script_fo:
+        script = script_fo.read()
+        cur.executescript(script)
+    cur.close()
+    con.close()
+
 
 def setup_postalcodes():
     """Setups up the database with postal codes if not already added to the
@@ -260,7 +281,7 @@ def db_email_check(email_value=None):
         email_value: the email address to search for
     """
     return_val = False
-    if email_value:
+    if email_value and DUPLICATE_EMAIL_CHECK:
         email_hash = sha512(email_value.lower().strip().encode()).hexdigest()
         con = sqlite3.connect(DB_PATH)
         cur = con.cursor()
