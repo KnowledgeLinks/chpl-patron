@@ -75,7 +75,7 @@ def crossdomain(origin=None, methods=None, headers=None,
 
 
 def setup_db():
-    """ checks to see if the database is setup and sets it up if it doesn't"""
+    """ checks to see if the database is setup and sets it up if it does not exist"""
     if not os.path.exists(DB_PATH):
         run_sql("db-schema.sql")
         setup_postalcodes()
@@ -84,6 +84,8 @@ def setup_db():
     con = sqlite3.connect(DB_PATH)
     cur =  con.cursor()
     exists = len(cur.execute(db_updated_query).fetchall()) > 0
+    cur.close()
+    con.close()
     if not exists:
         run_sql("db-remove-unique-email-constraint.sql")
     
