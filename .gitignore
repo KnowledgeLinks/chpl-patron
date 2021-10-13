@@ -1,8 +1,5 @@
 instance/
-<<<<<<< HEAD
 *.json
-=======
->>>>>>> 77beb323f0817dfbe6848c1774dda536f3f3500b
 *.log
 *.idea/
 *.swp
@@ -11,3 +8,7 @@ __pycache__*
 nohup.*
 *.pyc
 logging/
+chplpatron/
+.idea/
+logging/
+tests/

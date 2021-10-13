@@ -46,8 +46,33 @@ def setup(func):
     con.commit()
     cur.close()
     con.close()
+    
+    # update the database schema if needed to remove the unique email constraint
+    db_updated_query = "SELECT name FROM sqlite_master " \
+                       "WHERE type='table' AND name='old_{reg_table}';".format(reg_table=REG_TBL)
+    con = sqlite3.connect(DB_PATH)
+    cur = con.cursor()
+    updated_1 = len(cur.execute(db_updated_query).fetchall()) > 0
+    cur.close()
+    con.close()
+    if not updated_1:
+        run_sql(os.path.join(CURRENT_DIR, "db-remove-unique-email-constraint.sql"))
     TRACKING_DB_SETUP = True
     return func
+
+
+def run_sql(filename):
+    """Runs the SQL found in the file
+
+    :param filename: the name of the sql file to run
+    """
+    con = sqlite3.connect(DB_PATH)
+    cur = con.cursor()
+    with open(os.path.join(CURRENT_DIR, filename)) as script_fo:
+        script = script_fo.read().format(reg_table=REG_TBL)
+        cur.executescript(script)
+    cur.close()
+    con.close()
 
 
 @setup

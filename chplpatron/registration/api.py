@@ -31,6 +31,9 @@ app = Flask(__name__)
 app.config.from_mapping()
 app.config.from_object(config)
 
+# determine if duplicate emails should be checked
+DUPLICATE_EMAIL_CHECK = app.config.get("DUPLICATE_EMAIL_CHECK")
+
 if __name__ != '__main__':
     gunicorn_logger = logging.getLogger('gunicorn.error')
     app.logger.handlers = gunicorn_logger.handlers
@@ -113,7 +116,8 @@ def request_email_check():
     """
     try:
         rtn_msg = email_check(email=request.args.get(Flds.email.frm, ""),
-                              debug=request.args.get("debug", False))
+                              debug=request.args.get("debug", False),
+                              perform_email_check=DUPLICATE_EMAIL_CHECK)
         if rtn_msg['valid']:
             return jsonify(True)
         return jsonify(rtn_msg['message'])

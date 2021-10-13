@@ -71,26 +71,27 @@ def email_check(**kwargs):
 
     email_value = kwargs.get("email", "").lower().strip()
     debug_on = kwargs.get("debug", False)
+    perform_email_check = kwargs.get("perform_email_check")
     valid = True
     message = True
     if not validate_email(email_value):
         valid = False
         message = "Enter a valid email address"
-    else:
+    elif perform_email_check:
         try:
             sierra.check_email(email_value)
         except RegisteredEmailError:
             valid = False
             message = InvalidMsgs.email_reg.value
-    # if valid:
-    #     rtn_msg = True
-    # else:
-    #     rtn_msg = message
+
     rtn_msg = {"valid": valid, "message": message}
 
     if debug_on:
         try:
-            db_email_check = sierra.check_email(email_value)
+            if perform_email_check:
+                db_email_check = sierra.check_email(email_value)
+            else:
+                db_email_check = 'disabled'
         except RegisteredEmailError:
             db_email_check = False
         rtn_msg["debug"] = {

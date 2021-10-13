@@ -37,6 +37,7 @@ class TestCheckEmail(unittest.TestCase):
     def setUp(self):
         pass
 
+    @unittest.skip("Email is no longer in the Sierra system to test against.")
     def test_email(self):
         self.assertRaises(RegisteredEmailError,
                           sierra.check_email,
