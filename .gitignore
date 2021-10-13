@@ -1,9 +1,13 @@
 instance/
+*.json
+*.log
+*.idea/
 *.swp
 *.sqlite
 __pycache__*
 nohup.*
-chplpatron/
+*.pyc
+logging/
 .idea/
 logging/
 tests/

@@ -1,0 +1,1 @@
+from .postaldb import get_postal_code
