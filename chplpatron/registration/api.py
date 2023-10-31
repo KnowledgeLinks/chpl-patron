@@ -84,6 +84,10 @@ CROSS_DOMAIN_SITE = "https://chapelhillpubliclibrary.org" \
 
 basestring = (str, bytes)
 
+def get_calling_address(request):
+    if request.headers.getlist("X-Forwarded-For"):
+        return request.headers.getlist("X-Forwarded-For")[0]
+    return request.remote_addr
 
 @app.route("/register/boundary_check")
 @crossdomain(origin=CROSS_DOMAIN_SITE)
@@ -179,8 +183,9 @@ def index():
                        'postal_code': lookup.get(Flds.postal_code.frm)}
 
             boundary = boundary_check(**address)
-            location = "internal" if request.remote_addr \
-                       and request.remote_addr.startswith(config.INTERNAL_IP) \
+            calling_address = get_calling_address(request)
+            location = "internal" if calling_address \
+                       and calling_address.startswith(config.INTERNAL_IP) \
                        else "external"
             try:
                 temp_card_number = "testing"
@@ -291,6 +296,15 @@ def reg_by_month():
     data = trackingdb.registration_by_month()
     data = {"labels": [item[0] for item in data],
             "values": [item[1] for item in data]}
+    return jsonify(data)
+
+@app.route("/register/status")
+@crossdomain(origin=CROSS_DOMAIN_SITE)
+def status():
+    data = {"status": "up",
+            "calling_address": get_calling_address(request),
+            "remote_addr": request.remote_addr,
+            "in_house_address": config.INTERNAL_IP}
     return jsonify(data)
 
 

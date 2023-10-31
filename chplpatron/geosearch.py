@@ -9,6 +9,8 @@ import urllib
 from chplpatron.exceptions import *
 from chplpatron.utilities import urlencode_dict
 
+from instance import config
+
 POSTAL_CODE_CHECK_URL = ("https://geocode.arcgis.com/arcgis/rest/services/"
                          "World/GeocodeServer/find?text={}&f=pjson")
 
@@ -27,6 +29,11 @@ BOUNDARY_CHECK_URL = ("https://gisweb.townofchapelhill.org/arcgis/rest/"
                       "spatialRel=esriSpatialRelWithin&returnGeometry=false"
                       "&outSR=102100&returnCountOnly=true&f=json")
 
+BOUNDARY_CHECK_URL_NEW = ("https://gisweb.townofchapelhill.org/arcgis/rest/"
+                          "services/Locators/CH_Points_Address_Locator/"
+                          "GeocodeServer/findAddressCandidates?"
+                          "Single+Line+Input={street}, {city}, {state}, {postal_code}"
+                          "&magicKey={api_key}&f=pjson&matchOutofRange=false")
 
 def get_postal_code(postal_code):
     """
@@ -116,6 +123,20 @@ def check_boundary_coords(coords):
 
     raise RemoteApiError(url, response)
 
+def check_boundary_address(address):
+    """
+    Queries ARGGIS server to check if the address is defined boundary
+
+    :return: boolean 'true' = within boundary 'false' = not in boundary
+    """
+    address["api_key"] = config.GEO_API_KEY
+
+    url = BOUNDARY_CHECK_URL_NEW.format(**address)
+    response = requests.get(url)
+    if response.status_code < 399:
+        return bool(response.json().get('candidates', []))
+
+    raise RemoteApiError(url, response)
 
 def check_address(**address):
     """
@@ -126,5 +147,6 @@ def check_address(**address):
     :return:
     """
     address = update_city(**address)
-    address = get_geo_coords(address)
-    return check_boundary_coords(address)
+    #address = get_geo_coords(address)
+    #return check_boundary_coords(address)
+    return check_boundary_address(address)
