@@ -32,7 +32,7 @@ BOUNDARY_CHECK_URL = ("https://gisweb.townofchapelhill.org/arcgis/rest/"
 BOUNDARY_CHECK_URL_NEW = ("https://gisweb.townofchapelhill.org/arcgis/rest/"
                           "services/Locators/CH_Points_Address_Locator/"
                           "GeocodeServer/findAddressCandidates?"
-                          "Single+Line+Input={street}, {city}, {state}, {postal_code}"
+                          "SingleLine={street}, {city}, {state}, {postal_code}"
                           "&magicKey={api_key}&f=pjson&matchOutofRange=false")
 
 def get_postal_code(postal_code):
