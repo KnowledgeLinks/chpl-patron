@@ -5,6 +5,7 @@ Module for validating address information for a patron
 import re
 import requests
 import urllib
+import json
 
 from chplpatron.exceptions import *
 from chplpatron.utilities import urlencode_dict
@@ -34,6 +35,15 @@ BOUNDARY_CHECK_URL_NEW = ("https://gisweb.townofchapelhill.org/arcgis/rest/"
                           "GeocodeServer/findAddressCandidates?"
                           "Single+Line+Input={street}, {city}, {state}, {postal_code}"
                           "&magicKey={api_key}&f=pjson&matchOutofRange=false")
+
+#BOUNDARY_CHECK_URL_NEW = ("https://gisweb.townofchapelhill.org/arcgis/rest/"
+#                          "services/Locators/CH_Points_Address_Locator/"
+#                          "GeocodeServer/findAddressCandidates?"
+#                          "Street={street}&"
+#                          "City={city}&"
+#                          "State={state}&"
+#                          "ZIP={postal_code}&"
+#                          "magicKey={api_key}&f=pjson&matchOutofRange=false")
 
 def get_postal_code(postal_code):
     """
@@ -132,8 +142,14 @@ def check_boundary_address(address):
     address["api_key"] = config.GEO_API_KEY
 
     url = BOUNDARY_CHECK_URL_NEW.format(**address)
+    logger = address.get("logger")
+#    if logger:
+#        logger.info(url)
+#        logger.info(address)
     response = requests.get(url)
     if response.status_code < 399:
+#        if logger:
+#            logger.info(json.dumps(response.json(), indent=2))
         return bool(response.json().get('candidates', []))
 
     raise RemoteApiError(url, response)
