@@ -102,7 +102,8 @@ def request_boundary_check(**kwargs):
         address = {'street': lookup.get(Flds.street.frm),
                    'city': lookup.get(Flds.city.frm),
                    'state': lookup.get(Flds.state.frm),
-                   'postal_code': lookup.get(Flds.postal_code.frm)}
+                   'postal_code': lookup.get(Flds.postal_code.frm),
+                   'logger': log}
         rtn_msg = boundary_check(**address)
         return rtn_msg if kwargs else jsonify(rtn_msg)
     except Exception as err:
